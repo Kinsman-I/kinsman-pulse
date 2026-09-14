@@ -10,9 +10,8 @@ function security_headers(): void
     // Compatible with existing inline scripts, videos and Turnstile.
     // This is a limited policy, not a complete XSS defense.
    header("Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline' https://challenges.cloudflare.com; style-src 'self' 'unsafe-inline';
-   img-src 'self' data: blob:; font-src 'self'; connect-src 'self' https://api.asaas.com; frame-ancestors 'self'; base-uri 'self'; object-src 'none'"); {
+   img-src 'self' data: blob:; font-src 'self'; connect-src 'self' https://api.asaas.com; frame-ancestors 'self'; base-uri 'self'; object-src 'none'"); 
     header('Strict-Transport-Security: max-age=31536000; includeSubDomains');
-    }
 }
 
 function security_rate_hit(string $directory, string $key, int $limit, int $window, ?int $now = null): int
