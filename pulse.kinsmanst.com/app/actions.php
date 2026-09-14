@@ -232,7 +232,7 @@ function password_reset_email_html(array $user,string $link,array $brand=[]): st
 
 function action_reset(): never
 {
-    $password=(string)$_POST['password']; if(strlen($password)<8) throw new RuntimeException('A senha precisa ter pelo menos 8 caracteres.');
+$password=(string)$_POST['password']; if(strlen($password)<8||!preg_match('/[A-Z]/',$password)||!preg_match('/[0-9]/',$password)) throw new RuntimeException('A senha deve ter no mínimo 8 caracteres, incluindo uma maiúscula e um número.');
     if(!hash_equals($password,(string)$_POST['password_confirmation'])) throw new RuntimeException('As senhas nao coincidem.');
     $hash=hash('sha256',(string)$_POST['token']); $stmt=db()->prepare('SELECT * FROM password_resets WHERE token_hash=? AND used_at IS NULL AND expires_at>NOW()'); $stmt->execute([$hash]); $reset=$stmt->fetch();
     if(!$reset) throw new RuntimeException('Link invalido ou expirado.');
