@@ -1,0 +1,10 @@
+Options -Indexes +FollowSymLinks
+DirectoryIndex index.php
+
+<Files ".env">
+    Require all denied
+</Files>
+
+<Files "error_log">
+    Require all denied
+</Files>
