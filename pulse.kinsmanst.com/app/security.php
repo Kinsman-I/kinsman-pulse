@@ -9,9 +9,9 @@ function security_headers(): void
     header('Permissions-Policy: camera=(), microphone=(), geolocation=()');
     // Compatible with existing inline scripts, videos and Turnstile.
     // This is a limited policy, not a complete XSS defense.
-    header("Content-Security-Policy: base-uri 'self'; object-src 'none'; frame-ancestors 'self'");
-    if (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') {
-        header('Strict-Transport-Security: max-age=2592000');
+   header("Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline' https://challenges.cloudflare.com; style-src 'self' 'unsafe-inline';
+   img-src 'self' data: blob:; font-src 'self'; connect-src 'self' https://api.asaas.com; frame-ancestors 'self'; base-uri 'self'; object-src 'none'"); {
+    header('Strict-Transport-Security: max-age=31536000; includeSubDomains');
     }
 }
 
