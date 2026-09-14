@@ -1,0 +1,24 @@
+[12-Sep-2026 23:04:05 America/Fortaleza] PHP Fatal error:  Uncaught RuntimeException: Arquivo .env nao encontrado. Consulte docs/INSTALACAO-CPANEL.md. in /home4/israe196/pulse.kinsmanst.com/app/bootstrap.php:9
+Stack trace:
+#0 /home4/israe196/pulse.kinsmanst.com/app/bootstrap.php(21): load_env('/home4/israe196...')
+#1 /home4/israe196/pulse.kinsmanst.com/public_html/index.php(3): require('/home4/israe196...')
+#2 {main}
+  thrown in /home4/israe196/pulse.kinsmanst.com/app/bootstrap.php on line 9
+[12-Sep-2026 23:04:08 America/Fortaleza] PHP Fatal error:  Uncaught RuntimeException: Arquivo .env nao encontrado. Consulte docs/INSTALACAO-CPANEL.md. in /home4/israe196/pulse.kinsmanst.com/app/bootstrap.php:9
+Stack trace:
+#0 /home4/israe196/pulse.kinsmanst.com/app/bootstrap.php(21): load_env('/home4/israe196...')
+#1 /home4/israe196/pulse.kinsmanst.com/public_html/index.php(3): require('/home4/israe196...')
+#2 {main}
+  thrown in /home4/israe196/pulse.kinsmanst.com/app/bootstrap.php on line 9
+[12-Sep-2026 23:04:20 America/Fortaleza] PHP Fatal error:  Uncaught RuntimeException: Arquivo .env nao encontrado. Consulte docs/INSTALACAO-CPANEL.md. in /home4/israe196/pulse.kinsmanst.com/app/bootstrap.php:9
+Stack trace:
+#0 /home4/israe196/pulse.kinsmanst.com/app/bootstrap.php(21): load_env('/home4/israe196...')
+#1 /home4/israe196/pulse.kinsmanst.com/public_html/index.php(3): require('/home4/israe196...')
+#2 {main}
+  thrown in /home4/israe196/pulse.kinsmanst.com/app/bootstrap.php on line 9
+[12-Sep-2026 23:04:23 America/Fortaleza] PHP Fatal error:  Uncaught RuntimeException: Arquivo .env nao encontrado. Consulte docs/INSTALACAO-CPANEL.md. in /home4/israe196/pulse.kinsmanst.com/app/bootstrap.php:9
+Stack trace:
+#0 /home4/israe196/pulse.kinsmanst.com/app/bootstrap.php(21): load_env('/home4/israe196...')
+#1 /home4/israe196/pulse.kinsmanst.com/public_html/index.php(3): require('/home4/israe196...')
+#2 {main}
+  thrown in /home4/israe196/pulse.kinsmanst.com/app/bootstrap.php on line 9
