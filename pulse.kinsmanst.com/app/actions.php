@@ -250,7 +250,7 @@ function professional_access_blocked(array $u): bool
     $stmt->execute([$u['id'],$u['tenant_id']]);$row=$stmt->fetch();
     if(!$row)return true;
     if($row['subscription_status']==='active')return false;
-    if(in_array($row['subscription_status'],['past_due','cancelled'],true)&&!empty($row['access_until'])&&strtotime($row['access_until'])>=time())return false;
+   if(in_array($row['subscription_status'],['past_due','cancelled','trial'],true)&&!empty($row['access_until'])&&strtotime($row['access_until'])>=time())return false;
     if($row['subscription_status']==='past_due'){
         db()->prepare("UPDATE professionals SET subscription_status='cancelled' WHERE user_id=? AND tenant_id=? AND subscription_status='past_due'")->execute([$u['id'],$u['tenant_id']]);
     }
@@ -300,7 +300,7 @@ function action_start_asaas_checkout(): never
     $u=require_role('professional');$plan=(string)($_POST['plan']??'');
     if(!in_array($plan,['basic','plus','premium'],true))throw new RuntimeException('Plano inválido.');
     $pid=professional_id($u);$q=db()->prepare('SELECT service_type FROM professionals WHERE id=?');$q->execute([$pid]);$service=(string)$q->fetchColumn();$price=subscription_price($plan,$service);$reference='pulse-prof-'.$pid.'-'.$plan.'-'.bin2hex(random_bytes(6));$appUrl=rtrim((string)env('APP_URL'),'/');
-    $payload=['billingTypes'=>['CREDIT_CARD'],'chargeTypes'=>['RECURRENT'],'minutesToExpire'=>60,'externalReference'=>$reference,'callback'=>['successUrl'=>$appUrl.'/index.php?page=finance&checkout=success','cancelUrl'=>$appUrl.'/index.php?page=finance&checkout=cancel','expiredUrl'=>$appUrl.'/index.php?page=finance&checkout=expired'],'items'=>[['name'=>'Kinsman Pulse '.ucfirst($plan),'description'=>'Assinatura mensal · '.($service==='complete'?'Personal + Nutrição':($service==='nutrition'?'Nutrição':'Personal')),'quantity'=>1,'value'=>$price/100]],'subscription'=>['cycle'=>'MONTHLY','nextDueDate'=>date('Y-m-d H:i:s',time()+300)]];
+    $payload=['billingTypes'=>['CREDIT_CARD'],'chargeTypes'=>['RECURRENT'],'minutesToExpire'=>60,'externalReference'=>$reference,'callback'=>['successUrl'=>$appUrl.'/index.php?page=finance&checkout=success','cancelUrl'=>$appUrl.'/index.php?page=finance&checkout=cancel','expiredUrl'=>$appUrl.'/index.php?page=finance&checkout=expired'],'items'=>[['name'=>'Kinsman Pulse '.ucfirst($plan),'description'=>'Assinatura mensal · '.($service==='complete'?'Personal + Nutrição':($service==='nutrition'?'Nutrição':'Personal')),'quantity'=>1,'value'=>$price/100]],'subscription'=>['cycle'=>'MONTHLY','nextDueDate'=>date('Y-m-d H:i:s',time()+(7*24*60*60))];
     $checkout=asaas_request('POST','/checkouts',$payload);$checkoutId=(string)($checkout['id']??'');if($checkoutId==='')throw new RuntimeException('A Asaas não retornou o checkout.');
     db()->prepare('INSERT INTO professional_subscriptions(tenant_id,professional_id,plan_code,price_cents,status,asaas_checkout_id,external_reference) VALUES(?,?,?,?,\'cancelled\',?,?)')->execute([$u['tenant_id'],$pid,$plan,$price,$checkoutId,$reference]);
     redirect(asaas_checkout_url($checkoutId));
