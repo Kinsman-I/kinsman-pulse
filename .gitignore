@@ -1,25 +1,28 @@
-# CakePHP 3
+# Credenciais e ambiente
+.env
+*.env
 
-/vendor/*
-/config/app.php
+# Logs
+error_log
+*.log
 
-/tmp/cache/models/*
-!/tmp/cache/models/empty
-/tmp/cache/persistent/*
-!/tmp/cache/persistent/empty
-/tmp/cache/views/*
-!/tmp/cache/views/empty
-/tmp/sessions/*
-!/tmp/sessions/empty
-/tmp/tests/*
-!/tmp/tests/empty
+# Verificacao/diagnostico
+verificacao/
 
-/logs/*
-!/logs/empty
+# Uploads de usuarios
+public_html/uploads/
 
-# CakePHP 2
+# Dependencias
+vendor/
+node_modules/
 
-/app/tmp/*
-/app/Config/core.php
-/app/Config/database.php
-/vendors/*
+# Sistema operacional
+.DS_Store
+__MACOSX/
+._*
+
+# Editor
+.vscode/
+.idea/
+*.swp
+*.swo
