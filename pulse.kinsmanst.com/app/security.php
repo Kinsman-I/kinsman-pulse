@@ -6,7 +6,7 @@ function security_headers(): void
     header('X-Frame-Options: SAMEORIGIN');
     header('Referrer-Policy: strict-origin-when-cross-origin');
     header('Permissions-Policy: camera=(), microphone=(), geolocation=()');
-    header("Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline' https://challenges.cloudflare.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self' https://api.asaas.com; frame-ancestors 'self'; base-uri 'self'; object-src 'none'");
+    header("Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline' https://challenges.cloudflare.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self' https://challenges.cloudflare.com https://api.asaas.com; frame-src https://challenges.cloudflare.com; frame-ancestors 'self'; base-uri 'self'; object-src 'none'");
     header('Strict-Transport-Security: max-age=31536000; includeSubDomains');
 }
 
