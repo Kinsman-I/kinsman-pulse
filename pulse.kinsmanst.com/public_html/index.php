@@ -26,7 +26,10 @@ if($page==='login'){
 if($page==='register'){
   if(current_user())redirect(url());
   render('Criar conta profissional',function(){?>
-    <section class="auth-card register-card"><div class="auth-brand"><img class="official-logo" src="assets/images/logo-kinsman.png" alt="Logo Kinsman"><strong>Kinsman Pulse</strong></div><p class="eyebrow">TESTE GRÁTIS POR 7 DIAS</p><h1>Experimente o Pulse sem compromisso</h1><p>Crie sua conta, escolha a modalidade e conheça a plataforma por 7 dias. Não pedimos cartão no cadastro e não há cobrança automática.</p><?php render_flashes(); ?>
+    <section class="auth-card register-card"><div class="auth-brand"><img class="official-logo" src="assets/images/logo-kinsman.png" alt="Logo Kinsman"><strong>Kinsman Pulse</strong></div><p class="eyebrow">TESTE GRÁTIS POR 7 DIAS</p><h1>Experimente o Pulse sem compromisso</h1><p>Crie sua conta, escolha a modalidade e conheça a plataforma por 7 dias. Não pedimos cartão no cadastro e não há cobrança automática.</p><?php render_flashes(); ?><style>
+.register-card .billing-choice{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.register-card .billing-choice label{display:flex;align-items:flex-start;gap:9px;padding:12px;border:1px solid #d7e4dd;border-radius:9px;background:#f8fbf9;cursor:pointer}.register-card .billing-choice input{margin-top:4px;accent-color:#176b50}.register-card .billing-choice span{display:grid;gap:3px}.register-card .billing-choice b{font-size:13px;color:#173f36}.register-card .billing-choice small{font-size:11px;line-height:1.3;color:#657970}
+.register-card .password-input-wrap{position:relative;display:block}.register-card .password-input-wrap input{padding-right:48px}.register-card .password-toggle{position:absolute!important;top:50%;right:9px;transform:translateY(-50%);display:grid!important;place-items:center!important;width:32px!important;height:32px!important;min-height:0!important;margin:0!important;padding:0!important;border:0!important;border-radius:7px!important;background:transparent!important;color:#5d7469!important;box-shadow:none!important;cursor:pointer!important}.register-card .password-toggle:hover{background:#edf4f0!important;color:#176b50!important}.register-card .password-toggle svg{width:19px;height:19px}.register-card .password-feedback{margin:2px 0 18px;padding:14px 15px;border:1px solid #dce7e0;border-radius:10px;background:#f8faf8}.register-card .password-feedback-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:10px}.register-card .password-feedback-head b{font-size:13px;color:#23463a}.register-card .password-feedback-head span{font-size:12px;color:#718279}.register-card .password-meter{display:grid;grid-template-columns:repeat(5,1fr);gap:5px;margin-bottom:12px}.register-card .password-meter i{height:5px;border-radius:99px;background:#dbe5df;transition:.2s ease}.register-card .password-feedback[data-score="1"] .password-meter i:nth-child(-n+1){background:#d9615a}.register-card .password-feedback[data-score="2"] .password-meter i:nth-child(-n+2){background:#df9b3c}.register-card .password-feedback[data-score="3"] .password-meter i:nth-child(-n+3){background:#b9a33c}.register-card .password-feedback[data-score="4"] .password-meter i:nth-child(-n+4){background:#4a8a67}.register-card .password-feedback[data-score="5"] .password-meter i{background:#176b50}.register-card .password-feedback-list{display:grid;gap:5px;margin:0;padding:0;list-style:none}.register-card .password-feedback-list li{display:flex;align-items:center;gap:7px;color:#75837c;font-size:12px;line-height:1.35}.register-card .password-feedback-list li::before{content:"!";display:grid;place-items:center;width:16px;height:16px;flex:0 0 16px;border-radius:50%;background:#f5d9d6;color:#ae453e;font-size:11px;font-weight:800}.register-card .password-feedback.is-valid{border-color:#cfe2d7;background:#f1f8f4}.register-card .password-feedback.is-valid .password-feedback-head b,.register-card .password-feedback.is-valid .password-feedback-head span{color:#176b50}.register-card .password-feedback.is-valid .password-feedback-list li{color:#176b50}.register-card .password-feedback.is-valid .password-feedback-list li::before{content:"✓";background:#176b50;color:#fff}.register-card #register-submit:disabled{opacity:.55;cursor:not-allowed}@media(max-width:500px){.register-card .password-feedback-head{align-items:flex-start;flex-direction:column;gap:3px}}
+</style>
     <form method="post" class="stack"><?=csrf_field()?><input type="hidden" name="action" value="register_professional"><input type="hidden" name="referral_code" value="<?=e((string)($_GET['ref']??''))?>"><div class="fields-2"><label>Nome completo<input required name="name" autocomplete="name"></label><label>E-mail profissional<input required type="email" name="email" autocomplete="email"></label><label>Telefone/WhatsApp<input required name="phone" autocomplete="tel"></label><label>Modalidade<select required name="service_type"><option value="personal">Personal trainer</option><option value="nutrition">Nutricionista</option><option value="complete">Personal + Nutrição</option></select></label></div>
     <div class="billing-choice">
   <label><input type="radio" name="billing_start" value="trial" checked><span><b>Testar grátis por 7 dias</b><small>Sem cartão e sem cobrança automática</small></span></label>
@@ -35,44 +38,23 @@ if($page==='register'){
       <fieldset class="signup-plans"><legend>Escolha o limite inicial</legend><label><input type="radio" name="plan" value="basic" checked><span><b>Basic</b><small>Até 20 alunos</small><em>R$ 59,90 · completo R$ 89,90</em></span></label><label><input type="radio" name="plan" value="plus"><span><b>Plus</b><small>Até 40 alunos</small><em>R$ 99,90 · completo R$ 129,00</em></span></label><label><input type="radio" name="plan" value="premium"><span><b>Premium</b><small>Até 100 alunos</small><em>R$ 169,90 · completo R$ 219,00</em></span></label></fieldset>
     <div class="fields-2">
       <label>Senha
-        <span class="password-input-wrap">
-          <input required minlength="8" type="password" name="password" id="register-password" autocomplete="new-password">
-          <button class="password-toggle" type="button" data-password-toggle="register-password" aria-label="Mostrar senha" aria-pressed="false">
-            <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12Z"/><circle cx="12" cy="12" r="2.5"/></svg>
-            <span>Mostrar</span>
-          </button>
-        </span>
+        <span class="password-input-wrap"><input required minlength="8" type="password" name="password" id="register-password" autocomplete="new-password"><button class="password-toggle" type="button" data-password-toggle="register-password" aria-label="Mostrar senha" aria-pressed="false"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12Z"/><circle cx="12" cy="12" r="2.5"/></svg></button></span>
       </label>
       <label>Confirmar senha
-        <span class="password-input-wrap">
-          <input required minlength="8" type="password" name="password_confirmation" id="register-password-confirmation" autocomplete="new-password">
-          <button class="password-toggle" type="button" data-password-toggle="register-password-confirmation" aria-label="Mostrar confirmação de senha" aria-pressed="false">
-            <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12Z"/><circle cx="12" cy="12" r="2.5"/></svg>
-            <span>Mostrar</span>
-          </button>
-        </span>
+        <span class="password-input-wrap"><input required minlength="8" type="password" name="password_confirmation" id="register-password-confirmation" autocomplete="new-password"><button class="password-toggle" type="button" data-password-toggle="register-password-confirmation" aria-label="Mostrar confirmação de senha" aria-pressed="false"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12Z"/><circle cx="12" cy="12" r="2.5"/></svg></button></span>
       </label>
     </div>
-
-    <div class="password-strength" id="password-strength" aria-live="polite">
-      <div class="password-strength-head"><b id="password-strength-label">Digite uma senha</b><span id="password-strength-count">0 de 5 requisitos</span></div>
-      <div class="password-strength-track" aria-hidden="true"><i id="password-strength-bar"></i></div>
-    </div>
-
-    <ul class="password-checklist" id="password-checklist" aria-label="Requisitos da senha">
-      <li data-rule="length">8 caracteres</li><li data-rule="lower">Letra minúscula</li><li data-rule="upper">Letra maiúscula</li><li data-rule="number">Número</li><li data-rule="symbol">Símbolo</li><li data-rule="confirmation">Senhas iguais</li>
-    </ul>
+    <div class="password-feedback" id="password-feedback" data-score="0" aria-live="polite"><div class="password-feedback-head"><b id="password-feedback-title">Segurança da senha</b><span id="password-feedback-score">0 de 5 requisitos</span></div><div class="password-meter" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div><ul class="password-feedback-list" id="password-feedback-list"><li>Use pelo menos 8 caracteres</li><li>Inclua letra maiúscula, minúscula, número e símbolo</li><li>Repita a mesma senha no campo ao lado</li></ul></div>
     <p class="signup-trial-note"><strong>Como funciona:</strong> seu teste começa assim que o cadastro for concluído. Ao terminar, você escolhe se deseja continuar e qual plano contratar.</p><label class="terms-check"><input required type="checkbox" name="accept_terms" value="1"><span>Li e aceito os <a href="<?=url('terms')?>" target="_blank">Termos de Uso</a> e a <a href="<?=url('privacy')?>" target="_blank">Política de Privacidade</a>.</span></label><?=turnstile_widget('register')?><button class="primary" id="register-submit">Começar 7 dias grátis</button></form><p class="trial-legal">Sem cartão no cadastro. Sem cobrança automática.</p><a class="text-link" href="<?=url('login')?>">Já tenho uma conta</a></section><script>
 document.addEventListener('DOMContentLoaded', function () {
   const password = document.getElementById('register-password');
   const confirmation = document.getElementById('register-password-confirmation');
-  const checklist = document.getElementById('password-checklist');
   const submit = document.getElementById('register-submit');
-  const strength = document.getElementById('password-strength');
-  const label = document.getElementById('password-strength-label');
-  const count = document.getElementById('password-strength-count');
-  const bar = document.getElementById('password-strength-bar');
-  if (!password || !confirmation || !checklist || !submit || !strength || !label || !count || !bar) return;
+  const feedback = document.getElementById('password-feedback');
+  const title = document.getElementById('password-feedback-title');
+  const scoreText = document.getElementById('password-feedback-score');
+  const list = document.getElementById('password-feedback-list');
+  if (!password || !confirmation || !submit || !feedback || !title || !scoreText || !list) return;
 
   const rules = {
     length: value => value.length >= 8,
@@ -81,23 +63,20 @@ document.addEventListener('DOMContentLoaded', function () {
     number: value => /\d/.test(value),
     symbol: value => /[^A-Za-z0-9]/.test(value)
   };
-  const strengthLabels = ['Digite uma senha', 'Muito fraca', 'Fraca', 'Razoável', 'Forte', 'Senha segura'];
+  const strengthLabels = ['Segurança da senha', 'Muito fraca', 'Fraca', 'Razoável', 'Forte', 'Senha segura'];
+  const messages = {length:'Use pelo menos 8 caracteres',lower:'Inclua uma letra minúscula',upper:'Inclua uma letra maiúscula',number:'Inclua um número',symbol:'Inclua um símbolo, como @, ! ou #',confirmation:'Repita a mesma senha no campo ao lado'};
 
   function updatePasswordUI() {
     const value = password.value;
     const passedRules = Object.fromEntries(Object.entries(rules).map(([rule, check]) => [rule, check(value)]));
     const score = Object.values(passedRules).filter(Boolean).length;
     const confirmationPassed = value.length > 0 && value === confirmation.value;
-
-    Object.entries({...passedRules, confirmation: confirmationPassed}).forEach(([rule, passed]) => {
-      const item = checklist.querySelector(`[data-rule="${rule}"]`);
-      item.classList.toggle('is-valid', passed);
-    });
-
-    label.textContent = strengthLabels[score];
-    count.textContent = `${score} de 5 requisitos`;
-    bar.style.width = `${score * 20}%`;
-    strength.dataset.level = String(score);
+    const missing = Object.entries({...passedRules,confirmation:confirmationPassed}).filter(([,passed])=>!passed).map(([rule])=>messages[rule]);
+    title.textContent = strengthLabels[score];
+    scoreText.textContent = `${score} de 5 requisitos`;
+    feedback.dataset.score = String(score);
+    feedback.classList.toggle('is-valid', score === 5 && confirmationPassed);
+    list.innerHTML = missing.length ? missing.map(message=>`<li>${message}</li>`).join('') : '<li>Sua senha atende a todos os requisitos.</li>';
     submit.disabled = !(score === 5 && confirmationPassed);
   }
 
@@ -108,7 +87,6 @@ document.addEventListener('DOMContentLoaded', function () {
       input.type = showing ? 'password' : 'text';
       this.setAttribute('aria-pressed', String(!showing));
       this.setAttribute('aria-label', showing ? 'Mostrar senha' : 'Ocultar senha');
-      this.querySelector('span').textContent = showing ? 'Mostrar' : 'Ocultar';
       input.focus();
     });
   });
