@@ -961,3 +961,17 @@ textarea {
     gap: 10px 16px;
   }
 }
+
+
+.primary:focus-visible,
+.secondary:focus-visible,
+.danger:focus-visible {
+  outline: 3px solid rgba(22, 118, 95, .45);
+  outline-offset: 2px;
+}
+
+.primary:active,
+.secondary:active,
+.danger:active {
+  transform: scale(.97);
+}
