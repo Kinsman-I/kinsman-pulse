@@ -29,73 +29,92 @@ if($page==='register'){
     <section class="auth-card register-card"><div class="auth-brand"><img class="official-logo" src="assets/images/logo-kinsman.png" alt="Logo Kinsman"><strong>Kinsman Pulse</strong></div><p class="eyebrow">TESTE GRÁTIS POR 7 DIAS</p><h1>Experimente o Pulse sem compromisso</h1><p>Crie sua conta, escolha a modalidade e conheça a plataforma por 7 dias. Não pedimos cartão no cadastro e não há cobrança automática.</p><?php render_flashes(); ?>
     <form method="post" class="stack"><?=csrf_field()?><input type="hidden" name="action" value="register_professional"><input type="hidden" name="referral_code" value="<?=e((string)($_GET['ref']??''))?>"><div class="fields-2"><label>Nome completo<input required name="name" autocomplete="name"></label><label>E-mail profissional<input required type="email" name="email" autocomplete="email"></label><label>Telefone/WhatsApp<input required name="phone" autocomplete="tel"></label><label>Modalidade<select required name="service_type"><option value="personal">Personal trainer</option><option value="nutrition">Nutricionista</option><option value="complete">Personal + Nutrição</option></select></label></div>
     <div class="billing-choice">
-  <label><input type="radio" name="billing_start" value="trial" checked><span><b>Começar grátis</b><small>7 dias de teste · paga só depois</small></span></label>
-  <label><input type="radio" name="billing_start" value="now"><span><b>Assinar agora</b><small>ativação imediata após o pagamento</small></span></label>
+  <label><input type="radio" name="billing_start" value="trial" checked><span><b>Testar grátis por 7 dias</b><small>Sem cartão e sem cobrança automática</small></span></label>
+  <label><input type="radio" name="billing_start" value="now"><span><b>Assinar agora</b><small>Escolha o plano e siga para o pagamento seguro</small></span></label>
 </div>
       <fieldset class="signup-plans"><legend>Escolha o limite inicial</legend><label><input type="radio" name="plan" value="basic" checked><span><b>Basic</b><small>Até 20 alunos</small><em>R$ 59,90 · completo R$ 89,90</em></span></label><label><input type="radio" name="plan" value="plus"><span><b>Plus</b><small>Até 40 alunos</small><em>R$ 99,90 · completo R$ 129,00</em></span></label><label><input type="radio" name="plan" value="premium"><span><b>Premium</b><small>Até 100 alunos</small><em>R$ 169,90 · completo R$ 219,00</em></span></label></fieldset>
     <div class="fields-2">
-  <label>
-    Senha
-    <input required minlength="10" type="password" name="password"
-           id="register-password" autocomplete="new-password">
-  </label>
+      <label>Senha
+        <span class="password-input-wrap">
+          <input required minlength="8" type="password" name="password" id="register-password" autocomplete="new-password">
+          <button class="password-toggle" type="button" data-password-toggle="register-password" aria-label="Mostrar senha" aria-pressed="false">
+            <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12Z"/><circle cx="12" cy="12" r="2.5"/></svg>
+            <span>Mostrar</span>
+          </button>
+        </span>
+      </label>
+      <label>Confirmar senha
+        <span class="password-input-wrap">
+          <input required minlength="8" type="password" name="password_confirmation" id="register-password-confirmation" autocomplete="new-password">
+          <button class="password-toggle" type="button" data-password-toggle="register-password-confirmation" aria-label="Mostrar confirmação de senha" aria-pressed="false">
+            <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12Z"/><circle cx="12" cy="12" r="2.5"/></svg>
+            <span>Mostrar</span>
+          </button>
+        </span>
+      </label>
+    </div>
 
-  <label>
-    Confirmar senha
-    <input required minlength="10" type="password" name="password_confirmation"
-           id="register-password-confirmation" autocomplete="new-password">
-  </label>
-</div>
+    <div class="password-strength" id="password-strength" aria-live="polite">
+      <div class="password-strength-head"><b id="password-strength-label">Digite uma senha</b><span id="password-strength-count">0 de 5 requisitos</span></div>
+      <div class="password-strength-track" aria-hidden="true"><i id="password-strength-bar"></i></div>
+    </div>
 
-<ul class="password-checklist" id="password-checklist" aria-live="polite">
-  <li data-rule="length">Pelo menos 10 caracteres</li>
-  <li data-rule="lower">Uma letra minúscula</li>
-  <li data-rule="upper">Uma letra maiúscula</li>
-  <li data-rule="number">Um número</li>
-  <li data-rule="symbol">Um símbolo, como @, ! ou #</li>
-  <li data-rule="confirmation">As senhas são iguais</li>
-</ul><p class="signup-trial-note"><strong>Como funciona:</strong> seu teste começa assim que o cadastro for concluído. Ao terminar, você escolhe se deseja continuar e qual plano contratar.</p><label class="terms-check"><input required type="checkbox" name="accept_terms" value="1"><span>Li e aceito os <a href="<?=url('terms')?>" target="_blank">Termos de Uso</a> e a <a href="<?=url('privacy')?>" target="_blank">Política de Privacidade</a>.</span></label><?=turnstile_widget('register')?><button class="primary">Começar 7 dias grátis</button></form><p class="trial-legal">Sem cartão no cadastro. Sem cobrança automática.</p><a class="text-link" href="<?=url('login')?>">Já tenho uma conta</a></section><script>
+    <ul class="password-checklist" id="password-checklist" aria-label="Requisitos da senha">
+      <li data-rule="length">8 caracteres</li><li data-rule="lower">Letra minúscula</li><li data-rule="upper">Letra maiúscula</li><li data-rule="number">Número</li><li data-rule="symbol">Símbolo</li><li data-rule="confirmation">Senhas iguais</li>
+    </ul>
+    <p class="signup-trial-note"><strong>Como funciona:</strong> seu teste começa assim que o cadastro for concluído. Ao terminar, você escolhe se deseja continuar e qual plano contratar.</p><label class="terms-check"><input required type="checkbox" name="accept_terms" value="1"><span>Li e aceito os <a href="<?=url('terms')?>" target="_blank">Termos de Uso</a> e a <a href="<?=url('privacy')?>" target="_blank">Política de Privacidade</a>.</span></label><?=turnstile_widget('register')?><button class="primary" id="register-submit">Começar 7 dias grátis</button></form><p class="trial-legal">Sem cartão no cadastro. Sem cobrança automática.</p><a class="text-link" href="<?=url('login')?>">Já tenho uma conta</a></section><script>
 document.addEventListener('DOMContentLoaded', function () {
   const password = document.getElementById('register-password');
   const confirmation = document.getElementById('register-password-confirmation');
   const checklist = document.getElementById('password-checklist');
   const submit = document.getElementById('register-submit');
-
-  if (!password || !confirmation || !checklist || !submit) return;
+  const strength = document.getElementById('password-strength');
+  const label = document.getElementById('password-strength-label');
+  const count = document.getElementById('password-strength-count');
+  const bar = document.getElementById('password-strength-bar');
+  if (!password || !confirmation || !checklist || !submit || !strength || !label || !count || !bar) return;
 
   const rules = {
-    length: value => value.length >= 10,
+    length: value => value.length >= 8,
     lower: value => /[a-z]/.test(value),
     upper: value => /[A-Z]/.test(value),
     number: value => /\d/.test(value),
-    symbol: value => /[^A-Za-z0-9]/.test(value),
-    confirmation: value => value.length > 0 && value === confirmation.value
+    symbol: value => /[^A-Za-z0-9]/.test(value)
   };
+  const strengthLabels = ['Digite uma senha', 'Muito fraca', 'Fraca', 'Razoável', 'Forte', 'Senha segura'];
 
-  function updatePasswordChecklist() {
+  function updatePasswordUI() {
     const value = password.value;
-    let valid = true;
+    const passedRules = Object.fromEntries(Object.entries(rules).map(([rule, check]) => [rule, check(value)]));
+    const score = Object.values(passedRules).filter(Boolean).length;
+    const confirmationPassed = value.length > 0 && value === confirmation.value;
 
-    Object.entries(rules).forEach(([rule, check]) => {
+    Object.entries({...passedRules, confirmation: confirmationPassed}).forEach(([rule, passed]) => {
       const item = checklist.querySelector(`[data-rule="${rule}"]`);
-      const passed = check(value);
-
       item.classList.toggle('is-valid', passed);
-      item.setAttribute(
-        'aria-label',
-        `${item.textContent}: ${passed ? 'atendido' : 'não atendido'}`
-      );
-
-      if (!passed) valid = false;
     });
 
-    submit.disabled = !valid;
+    label.textContent = strengthLabels[score];
+    count.textContent = `${score} de 5 requisitos`;
+    bar.style.width = `${score * 20}%`;
+    strength.dataset.level = String(score);
+    submit.disabled = !(score === 5 && confirmationPassed);
   }
 
-  password.addEventListener('input', updatePasswordChecklist);
-  confirmation.addEventListener('input', updatePasswordChecklist);
-
-  updatePasswordChecklist();
+  document.querySelectorAll('[data-password-toggle]').forEach(button => {
+    button.addEventListener('click', function () {
+      const input = document.getElementById(this.dataset.passwordToggle);
+      const showing = input.type === 'text';
+      input.type = showing ? 'password' : 'text';
+      this.setAttribute('aria-pressed', String(!showing));
+      this.setAttribute('aria-label', showing ? 'Mostrar senha' : 'Ocultar senha');
+      this.querySelector('span').textContent = showing ? 'Mostrar' : 'Ocultar';
+      input.focus();
+    });
+  });
+  password.addEventListener('input', updatePasswordUI);
+  confirmation.addEventListener('input', updatePasswordUI);
+  updatePasswordUI();
 });
 </script><?=turnstile_script()?><?php },true);exit;
 }
