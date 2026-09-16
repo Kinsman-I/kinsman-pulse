@@ -178,3 +178,21 @@ input[type="date"] {
 .fields-2 label {
   min-width: 0;
 }
+
+.improved-body path,
+.improved-body ellipse {
+  transition: fill .2s ease, stroke .2s ease;
+  cursor: pointer;
+}
+
+.improved-body path:hover,
+.improved-body ellipse:hover {
+  fill: #cfe8e0;
+  stroke: var(--brand, #16765f);
+}
+
+.improved-body .selected {
+  fill: var(--brand, #16765f);
+  stroke: #0b3b31;
+  stroke-width: 3;
+}
