@@ -44,24 +44,17 @@ document.addEventListener('DOMContentLoaded',()=>{
   });
   const bodyParts=document.querySelectorAll('.improved-body path, .improved-body ellipse');
   if(bodyParts.length){
-    const caption=document.querySelector('.body-maps figcaption');
-    const defaultCaption=caption?.textContent??'';
     bodyParts.forEach(part=>{
       part.addEventListener('click',()=>{
         document.querySelectorAll('.improved-body .selected').forEach(sel=>sel.classList.remove('selected'));
         part.classList.add('selected');
-        if(caption)caption.textContent='Região selecionada — veja os exercícios ao lado';
       });
     });
-    if(caption){
-      document.addEventListener('click',e=>{
-        if(!e.target.closest('.improved-body')&&caption.dataset.restoring!=='1'){
-          caption.dataset.restoring='1';
-          caption.textContent=defaultCaption;
-          setTimeout(()=>delete caption.dataset.restoring,0);
-        }
-      });
-    }
+    document.addEventListener('click',e=>{
+      if(!e.target.closest('.improved-body')){
+        document.querySelectorAll('.improved-body .selected').forEach(sel=>sel.classList.remove('selected'));
+      }
+    });
   }
   const cookieBanner=document.getElementById('cookieBanner');
   const cookieChoice=localStorage.getItem('kinsman_cookie_consent');
