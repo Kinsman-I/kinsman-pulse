@@ -33,7 +33,28 @@ if($page==='register'){
   <label><input type="radio" name="billing_start" value="now"><span><b>Assinar agora</b><small>ativação imediata após o pagamento</small></span></label>
 </div>
       <fieldset class="signup-plans"><legend>Escolha o limite inicial</legend><label><input type="radio" name="plan" value="basic" checked><span><b>Basic</b><small>Até 20 alunos</small><em>R$ 59,90 · completo R$ 89,90</em></span></label><label><input type="radio" name="plan" value="plus"><span><b>Plus</b><small>Até 40 alunos</small><em>R$ 99,90 · completo R$ 129,00</em></span></label><label><input type="radio" name="plan" value="premium"><span><b>Premium</b><small>Até 100 alunos</small><em>R$ 169,90 · completo R$ 219,00</em></span></label></fieldset>
-    <div class="fields-2"><label>Senha<input required minlength="8" type="password" name="password" autocomplete="new-password"></label><label>Confirmar senha<input required minlength="8" type="password" name="password_confirmation" autocomplete="new-password"></label></div><p class="signup-trial-note"><strong>Como funciona:</strong> seu teste começa assim que o cadastro for concluído. Ao terminar, você escolhe se deseja continuar e qual plano contratar.</p><label class="terms-check"><input required type="checkbox" name="accept_terms" value="1"><span>Li e aceito os <a href="<?=url('terms')?>" target="_blank">Termos de Uso</a> e a <a href="<?=url('privacy')?>" target="_blank">Política de Privacidade</a>.</span></label><?=turnstile_widget('register')?><button class="primary">Começar 7 dias grátis</button></form><p class="trial-legal">Sem cartão no cadastro. Sem cobrança automática.</p><a class="text-link" href="<?=url('login')?>">Já tenho uma conta</a></section><?=turnstile_script()?><?php },true);exit;
+    <div class="fields-2">
+  <label>
+    Senha
+    <input required minlength="10" type="password" name="password"
+           id="register-password" autocomplete="new-password">
+  </label>
+
+  <label>
+    Confirmar senha
+    <input required minlength="10" type="password" name="password_confirmation"
+           id="register-password-confirmation" autocomplete="new-password">
+  </label>
+</div>
+
+<ul class="password-checklist" id="password-checklist" aria-live="polite">
+  <li data-rule="length">Pelo menos 10 caracteres</li>
+  <li data-rule="lower">Uma letra minúscula</li>
+  <li data-rule="upper">Uma letra maiúscula</li>
+  <li data-rule="number">Um número</li>
+  <li data-rule="symbol">Um símbolo, como @, ! ou #</li>
+  <li data-rule="confirmation">As senhas são iguais</li>
+</ul><p class="signup-trial-note"><strong>Como funciona:</strong> seu teste começa assim que o cadastro for concluído. Ao terminar, você escolhe se deseja continuar e qual plano contratar.</p><label class="terms-check"><input required type="checkbox" name="accept_terms" value="1"><span>Li e aceito os <a href="<?=url('terms')?>" target="_blank">Termos de Uso</a> e a <a href="<?=url('privacy')?>" target="_blank">Política de Privacidade</a>.</span></label><?=turnstile_widget('register')?><button class="primary">Começar 7 dias grátis</button></form><p class="trial-legal">Sem cartão no cadastro. Sem cobrança automática.</p><a class="text-link" href="<?=url('login')?>">Já tenho uma conta</a></section><?=turnstile_script()?><?php },true);exit;
 }
 if($page==='forgot'){
   render('Recuperar senha',function(){?>
