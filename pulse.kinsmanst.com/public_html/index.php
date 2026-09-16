@@ -54,7 +54,50 @@ if($page==='register'){
   <li data-rule="number">Um número</li>
   <li data-rule="symbol">Um símbolo, como @, ! ou #</li>
   <li data-rule="confirmation">As senhas são iguais</li>
-</ul><p class="signup-trial-note"><strong>Como funciona:</strong> seu teste começa assim que o cadastro for concluído. Ao terminar, você escolhe se deseja continuar e qual plano contratar.</p><label class="terms-check"><input required type="checkbox" name="accept_terms" value="1"><span>Li e aceito os <a href="<?=url('terms')?>" target="_blank">Termos de Uso</a> e a <a href="<?=url('privacy')?>" target="_blank">Política de Privacidade</a>.</span></label><?=turnstile_widget('register')?><button class="primary">Começar 7 dias grátis</button></form><p class="trial-legal">Sem cartão no cadastro. Sem cobrança automática.</p><a class="text-link" href="<?=url('login')?>">Já tenho uma conta</a></section><?=turnstile_script()?><?php },true);exit;
+</ul><p class="signup-trial-note"><strong>Como funciona:</strong> seu teste começa assim que o cadastro for concluído. Ao terminar, você escolhe se deseja continuar e qual plano contratar.</p><label class="terms-check"><input required type="checkbox" name="accept_terms" value="1"><span>Li e aceito os <a href="<?=url('terms')?>" target="_blank">Termos de Uso</a> e a <a href="<?=url('privacy')?>" target="_blank">Política de Privacidade</a>.</span></label><?=turnstile_widget('register')?><button class="primary">Começar 7 dias grátis</button></form><p class="trial-legal">Sem cartão no cadastro. Sem cobrança automática.</p><a class="text-link" href="<?=url('login')?>">Já tenho uma conta</a></section><script>
+document.addEventListener('DOMContentLoaded', function () {
+  const password = document.getElementById('register-password');
+  const confirmation = document.getElementById('register-password-confirmation');
+  const checklist = document.getElementById('password-checklist');
+  const submit = document.getElementById('register-submit');
+
+  if (!password || !confirmation || !checklist || !submit) return;
+
+  const rules = {
+    length: value => value.length >= 10,
+    lower: value => /[a-z]/.test(value),
+    upper: value => /[A-Z]/.test(value),
+    number: value => /\d/.test(value),
+    symbol: value => /[^A-Za-z0-9]/.test(value),
+    confirmation: value => value.length > 0 && value === confirmation.value
+  };
+
+  function updatePasswordChecklist() {
+    const value = password.value;
+    let valid = true;
+
+    Object.entries(rules).forEach(([rule, check]) => {
+      const item = checklist.querySelector(`[data-rule="${rule}"]`);
+      const passed = check(value);
+
+      item.classList.toggle('is-valid', passed);
+      item.setAttribute(
+        'aria-label',
+        `${item.textContent}: ${passed ? 'atendido' : 'não atendido'}`
+      );
+
+      if (!passed) valid = false;
+    });
+
+    submit.disabled = !valid;
+  }
+
+  password.addEventListener('input', updatePasswordChecklist);
+  confirmation.addEventListener('input', updatePasswordChecklist);
+
+  updatePasswordChecklist();
+});
+</script><?=turnstile_script()?><?php },true);exit;
 }
 if($page==='forgot'){
   render('Recuperar senha',function(){?>
