@@ -196,3 +196,20 @@ input[type="date"] {
   stroke: #0b3b31;
   stroke-width: 3;
 }
+.improved-body path,
+.improved-body ellipse {
+  transition: fill .2s ease, stroke .2s ease;
+  cursor: pointer;
+}
+
+.improved-body path:hover:not(.selected),
+.improved-body ellipse:hover:not(.selected) {
+  fill: #cfe8e0;
+  stroke: var(--brand, #16765f);
+}
+
+.improved-body .selected {
+  fill: var(--brand, #16765f);
+  stroke: #0b3b31;
+  stroke-width: 3;
+}
