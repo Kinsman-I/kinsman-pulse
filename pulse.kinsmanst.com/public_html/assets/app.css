@@ -142,74 +142,160 @@
 .guest-body:has(.landing-page) .guest-top {
   background: #123f36;
   border-bottom: 1px solid #245b4d;
+.button,
+.entry-primary,
+.finish-box button,
+.anamnesis-submit {
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
 }
 
 .guest-body:has(.landing-page) .guest-top .brand,
 .guest-body:has(.landing-page) .guest-top .brand small,
 .guest-body:has(.landing-page) .guest-nav a {
   color: #ffffff;
+.button {
+  max-width: 100%;
 }
 
 .guest-body:has(.landing-page) .guest-login {
   background: #d9f262;
   color: #123f36;
+.button:focus-visible,
+.entry-primary:focus-visible,
+.finish-box button:focus-visible,
+.anamnesis-submit:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--brand) 45%, #fff);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 6px color-mix(in srgb, var(--brand) 18%, transparent);
 }
 
 .guest-body:has(.landing-page) .guest-footer {
   background: #123f36;
   color: #c8ddd4;
+.button:active,
+.entry-primary:active,
+.finish-box button:active {
+  transform: scale(.98);
 }
 
 .guest-body:has(.landing-page) .guest-footer a {
   color: #d9f262;
+@media (max-width: 520px) {
+  .button,
+  .finish-box button,
+  .anamnesis-submit {
+    width: 100%;
+    max-width: 100%;
+    min-height: 52px;
+  }
 }
 
 @media (max-width: 700px) {
   .fields-2 {
     grid-template-columns: 1fr;
   }
+.fields-2,
+.anamnesis-form,
+.filter-bar {
+  min-width: 0;
 }
 
 input[type="date"] {
   width: 100%;
+.fields-2 > *,
+.anamnesis-form label,
+.fields-2 label,
+.filter-bar label {
   min-width: 0;
+  max-width: 100%;
 }
 
 .fields-2 label {
+.fields-2 label > input,
+.fields-2 label > select,
+input[type="date"],
+input[type="text"],
+input[type="email"],
+input[type="tel"],
+input[type="number"] {
+  width: 100%;
   min-width: 0;
+  max-width: 100%;
 }
 
-.improved-body path,
-.improved-body ellipse {
-  transition: fill .2s ease, stroke .2s ease;
+.muscle-zone {
   cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  transform-box: fill-box;
+  transform-origin: center;
+  outline: none;
 }
 
-.improved-body path:hover,
-.improved-body ellipse:hover {
-  fill: #cfe8e0;
-  stroke: var(--brand, #16765f);
+.muscle-zone path {
+  fill: #9db8af;
+  stroke: #6d8c82;
+  stroke-width: 1.5;
+  transition: fill .18s ease, stroke .18s ease, opacity .18s ease;
+  opacity: .75;
+  fill: #a9c4ba;
+  stroke: #fff;
+  stroke-width: 1.6;
+  opacity: .8;
+  transition: fill .2s ease, stroke .2s ease, opacity .2s ease;
 }
 
-.improved-body .selected {
-  fill: var(--brand, #16765f);
+.muscle-zone:hover,
+.improved-body .muscle-zone:hover,
+.muscle-zone:focus-visible,
+.improved-body .muscle-zone:focus-visible {
+  fill: var(--brand);
   stroke: #0b3b31;
-  stroke-width: 3;
-}
-.improved-body path,
-.improved-body ellipse {
-  transition: fill .2s ease, stroke .2s ease;
-  cursor: pointer;
+  filter: drop-shadow(0 4px 8px rgba(22, 118, 95, .25));
 }
 
-.improved-body path:hover:not(.selected),
-.improved-body ellipse:hover:not(.selected) {
-  fill: #cfe8e0;
-  stroke: var(--brand, #16765f);
-}
-
-.improved-body .selected {
+.muscle-zone:hover path,
+.muscle-zone:focus path {
   fill: var(--brand, #16765f);
+.muscle-zone:focus-visible path,
+.improved-body .muscle-zone:hover path {
+  fill: var(--brand);
   stroke: #0b3b31;
-  stroke-width: 3;
+  opacity: 1;
+}
+
+.muscle-zone.active path {
+  fill: var(--brand, #16765f);
+  stroke: #d8f46b;
+.muscle-zone.active,
+.improved-body .muscle-zone.active {
+  fill: var(--brand);
+  stroke: var(--lime);
+  filter: drop-shadow(0 5px 9px rgba(22, 118, 95, .35));
+  animation: zonePulse .45s ease;
+}
+
+.muscle-zone.active path,
+.improved-body .muscle-zone.active path {
+  fill: var(--brand);
+  stroke: var(--lime);
+  stroke-width: 2.5;
+  opacity: 1;
+}
+
+.body-map-panel,
+.muscle-layout .body-map-head a {
+  -webkit-tap-highlight-color: transparent;
+@keyframes zonePulse {
+  0% { transform: scale(1); }
+  40% { transform: scale(1.05); }
+  100% { transform: scale(1); }
+}
+
+.flag,
+.prontuario .flag,
+.panel-head .flag,
+.tabs .flag {
+  display: none !important;
 }
