@@ -123,3 +123,46 @@ input[type="number"] {
 .tabs .flag {
   display: none !important;
 }
+
+
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+@media (max-width: 640px) {
+
+  button {
+    max-width: 100%;
+    padding: 14px 20px;
+    border-radius: 12px;
+    touch-action: manipulation;
+  }
+
+  button:focus-visible {
+    outline: 3px solid rgba(37, 99, 235, .5);
+    outline-offset: 2px;
+  }
+
+  button:active {
+    transform: scale(.97);
+  }
+
+  input,
+  select,
+  textarea {
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+
+  .form-row,
+  [class*="row"] {
+    display: block;
+  }
+
+  .form-row > *,
+  [class*="row"] > * {
+    width: 100%;
+    margin-bottom: 12px;
+  }
+}
