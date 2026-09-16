@@ -1053,3 +1053,39 @@ input[type="date"] {
   -webkit-appearance: none;
   appearance: none;
 }
+
+.trial-callout {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 14px 16px;
+  border: 1px solid #d8f46b;
+  border-radius: 12px;
+  background: rgba(216, 244, 107, .12);
+  margin-bottom: 14px;
+}
+
+.trial-badge {
+  align-self: flex-start;
+  background: #d8f46b;
+  color: #0b3b31;
+  font-weight: 800;
+  font-size: .72rem;
+  letter-spacing: .08em;
+  padding: 4px 10px;
+  border-radius: 999px;
+}
+
+.trial-callout p {
+  margin: 0;
+  font-size: .9rem;
+  font-weight: 600;
+  color: #173a34;
+}
+
+.trial-micro {
+  font-size: .82rem;
+  text-align: center;
+  color: #5b7a72;
+  margin-top: 10px;
+}
