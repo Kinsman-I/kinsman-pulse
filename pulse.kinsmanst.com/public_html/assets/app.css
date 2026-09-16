@@ -299,3 +299,6 @@ input[type="number"] {
 .tabs .flag {
   display: none !important;
 }
+
+  /* Cole no final de public_html/assets/app.css */
+.signup-trial-note{margin:4px 0 2px;padding:14px 16px;border:1px solid #d9e3d9;border-radius:10px;background:#f3f7f0;color:#365c4b;font-size:.9rem;line-height:1.55}.signup-trial-note strong{color:#123e33}.trial-legal{margin:2px 0 0;color:#617367;font-size:.78rem;text-align:center}
