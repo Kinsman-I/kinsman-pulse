@@ -179,37 +179,35 @@ input[type="date"] {
   min-width: 0;
 }
 
-.improved-body path,
-.improved-body ellipse {
-  transition: fill .2s ease, stroke .2s ease;
+.muscle-zone {
   cursor: pointer;
+  touch-action: manipulation;
 }
 
-.improved-body path:hover,
-.improved-body ellipse:hover {
-  fill: #cfe8e0;
-  stroke: var(--brand, #16765f);
+.muscle-zone path {
+  fill: #9db8af;
+  stroke: #6d8c82;
+  stroke-width: 1.5;
+  transition: fill .18s ease, stroke .18s ease, opacity .18s ease;
+  opacity: .75;
 }
 
-.improved-body .selected {
+.muscle-zone:hover path,
+.muscle-zone:focus path {
   fill: var(--brand, #16765f);
   stroke: #0b3b31;
-  stroke-width: 3;
-}
-.improved-body path,
-.improved-body ellipse {
-  transition: fill .2s ease, stroke .2s ease;
-  cursor: pointer;
+  opacity: 1;
 }
 
-.improved-body path:hover:not(.selected),
-.improved-body ellipse:hover:not(.selected) {
-  fill: #cfe8e0;
-  stroke: var(--brand, #16765f);
-}
-
-.improved-body .selected {
+.muscle-zone.active path {
   fill: var(--brand, #16765f);
-  stroke: #0b3b31;
-  stroke-width: 3;
+  stroke: #d8f46b;
+  stroke-width: 2.5;
+  opacity: 1;
 }
+
+.body-map-panel,
+.muscle-layout .body-map-head a {
+  -webkit-tap-highlight-color: transparent;
+}
+
