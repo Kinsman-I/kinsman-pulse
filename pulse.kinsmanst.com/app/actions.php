@@ -74,7 +74,8 @@ function action_login(): never
     if(count($matches)>1) throw new RuntimeException('Este telefone está em mais de uma conta. Entre com seu e-mail.');
     $u=$matches[0]??null;
     if (!$u || !password_verify((string)$_POST['password'], $u['password_hash'])) { flash('error','E-mail, telefone ou senha incorretos.'); redirect(url('login')); }
-    session_regenerate_id(true); $_SESSION['user_id']=$u['id'];
+    session_regenerate_id(true);
+    $_SESSION['user_id']=$u['id'];
     $_SESSION['auth_fingerprint']=hash('sha256',(string)$u['password_hash']);
     db()->prepare('UPDATE users SET last_login_at=NOW() WHERE id=?')->execute([$u['id']]); audit('login'); redirect(url());
 }
@@ -98,23 +99,26 @@ function action_register_professional(): never
     $tenantId=(int)env('PLATFORM_TENANT_ID',0);
     if($tenantId<1){$tenantId=(int)db()->query("SELECT tenant_id FROM users WHERE role='admin' AND active=1 ORDER BY id LIMIT 1")->fetchColumn();}
     if($tenantId<1) throw new RuntimeException('A plataforma ainda não está disponível para novos cadastros.');
+    $passwordHash=password_hash($password,PASSWORD_DEFAULT);
     db()->beginTransaction();
-    db()->prepare('INSERT INTO users(tenant_id,role,name,email,password_hash,phone) VALUES(?,?,?,?,?,?)')->execute([$tenantId,'professional',$name,$email,password_hash($password,PASSWORD_DEFAULT),$phone?:null]);
+    db()->prepare('INSERT INTO users(tenant_id,role,name,email,password_hash,phone) VALUES(?,?,?,?,?,?)')->execute([$tenantId,'professional',$name,$email,$passwordHash,$phone?:null]);
     $uid=(int)db()->lastInsertId();
     $referralCode='KIN'.strtoupper(bin2hex(random_bytes(4)));
     $referredBy=null;$incomingRef=strtoupper(trim((string)($_POST['referral_code']??'')));
     if($incomingRef!==''){$ref=db()->prepare('SELECT id FROM professionals WHERE referral_code=? LIMIT 1');$ref->execute([$incomingRef]);$referredBy=(int)$ref->fetchColumn()?:null;}
-    db()->prepare("INSERT INTO professionals(tenant_id,user_id,service_type,subscription_plan,subscription_status,trial_ends_at,referral_code,referred_by_professional_id) VALUES(?,?,?,?,'cancelled',NULL,?,?)")->execute([$tenantId,$uid,$service,$plan,$referralCode,$referredBy]);
+    $trialEndsAt=(new DateTimeImmutable('now'))->modify('+7 days')->format('Y-m-d H:i:s');
+    db()->prepare("INSERT INTO professionals(tenant_id,user_id,service_type,subscription_plan,subscription_status,trial_ends_at,referral_code,referred_by_professional_id) VALUES(?,?,?,?,'trial',?, ?,?)")->execute([$tenantId,$uid,$service,$plan,$trialEndsAt,$referralCode,$referredBy]);
     $pid=(int)db()->lastInsertId();
-    db()->prepare("INSERT INTO professional_subscriptions(tenant_id,professional_id,plan_code,price_cents,status,ends_at) VALUES(?,?,?,?,'cancelled',NOW())")->execute([$tenantId,$pid,$plan,subscription_price($plan,$service)]);
+    db()->prepare("INSERT INTO professional_subscriptions(tenant_id,professional_id,plan_code,price_cents,status,starts_at,ends_at) VALUES(?,?,?,?,'trial',NOW(),?)")->execute([$tenantId,$pid,$plan,subscription_price($plan,$service),$trialEndsAt]);
     if($referredBy)db()->prepare("INSERT IGNORE INTO referral_rewards(referrer_professional_id,referred_professional_id,status) VALUES(?,?,'pending')")->execute([$referredBy,$pid]);
     db()->commit();
     $welcomeSent=send_professional_welcome_email(['name'=>$name,'email'=>$email]);
-    session_regenerate_id(true);$_SESSION['user_id']=$uid;
-    $auth=db()->prepare('SELECT password_hash FROM users WHERE id=?');$auth->execute([$uid]);
-    $_SESSION['auth_fingerprint']=hash('sha256',(string)$auth->fetchColumn());
-    audit('professional.self_registered','professional',$pid,['plan'=>$plan,'service_type'=>$service,'welcome_email'=>$welcomeSent]);
-    flash('success',$welcomeSent?'Cadastro concluído. Enviamos o manual de uso para seu e-mail. Escolha o plano para ativar sua conta.':'Cadastro concluído. Escolha o plano para ativar sua conta.');redirect(url('finance'));
+    session_regenerate_id(true);
+    $_SESSION['user_id']=$uid;
+    $_SESSION['auth_fingerprint']=hash('sha256',$passwordHash);
+    audit('professional.self_registered','professional',$pid,['plan'=>$plan,'service_type'=>$service,'trial_ends_at'=>$trialEndsAt,'welcome_email'=>$welcomeSent]);
+    flash('success',$welcomeSent?'Seu teste de 7 dias começou. Enviamos o manual de uso para seu e-mail.':'Seu teste de 7 dias começou. Aproveite a plataforma.');
+    redirect(url('dashboard'));
 }
 
 function send_professional_welcome_email(array $professional): bool
@@ -232,7 +236,7 @@ function password_reset_email_html(array $user,string $link,array $brand=[]): st
 
 function action_reset(): never
 {
-$password=(string)$_POST['password']; if(strlen($password)<8||!preg_match('/[A-Z]/',$password)||!preg_match('/[0-9]/',$password)) throw new RuntimeException('A senha deve ter no mínimo 8 caracteres, incluindo uma maiúscula e um número.');
+    $password=(string)$_POST['password']; if(strlen($password)<8) throw new RuntimeException('A senha precisa ter pelo menos 8 caracteres.');
     if(!hash_equals($password,(string)$_POST['password_confirmation'])) throw new RuntimeException('As senhas nao coincidem.');
     $hash=hash('sha256',(string)$_POST['token']); $stmt=db()->prepare('SELECT * FROM password_resets WHERE token_hash=? AND used_at IS NULL AND expires_at>NOW()'); $stmt->execute([$hash]); $reset=$stmt->fetch();
     if(!$reset) throw new RuntimeException('Link invalido ou expirado.');
@@ -246,11 +250,18 @@ function professional_id(array $u): int
 function professional_access_blocked(array $u): bool
 {
     if(($u['role']??null)!=='professional')return false;
-    $stmt=db()->prepare('SELECT subscription_status,access_until FROM professionals WHERE user_id=? AND tenant_id=?');
+    $stmt=db()->prepare('SELECT id,subscription_status,trial_ends_at,access_until FROM professionals WHERE user_id=? AND tenant_id=?');
     $stmt->execute([$u['id'],$u['tenant_id']]);$row=$stmt->fetch();
     if(!$row)return true;
     if($row['subscription_status']==='active')return false;
-   if(in_array($row['subscription_status'],['past_due','cancelled','trial'],true)&&!empty($row['access_until'])&&strtotime($row['access_until'])>=time())return false;
+    if($row['subscription_status']==='trial'&&!empty($row['trial_ends_at'])&&strtotime($row['trial_ends_at'])>=time())return false;
+    if($row['subscription_status']==='trial'){
+        db()->beginTransaction();
+        db()->prepare("UPDATE professionals SET subscription_status='cancelled' WHERE id=? AND subscription_status='trial'")->execute([$row['id']]);
+        db()->prepare("UPDATE professional_subscriptions SET status='cancelled',ends_at=NOW() WHERE professional_id=? AND status='trial'")->execute([$row['id']]);
+        db()->commit();
+    }
+    if(in_array($row['subscription_status'],['past_due','cancelled'],true)&&!empty($row['access_until'])&&strtotime($row['access_until'])>=time())return false;
     if($row['subscription_status']==='past_due'){
         db()->prepare("UPDATE professionals SET subscription_status='cancelled' WHERE user_id=? AND tenant_id=? AND subscription_status='past_due'")->execute([$u['id'],$u['tenant_id']]);
     }
@@ -300,10 +311,9 @@ function action_start_asaas_checkout(): never
     $u=require_role('professional');$plan=(string)($_POST['plan']??'');
     if(!in_array($plan,['basic','plus','premium'],true))throw new RuntimeException('Plano inválido.');
     $pid=professional_id($u);$q=db()->prepare('SELECT service_type FROM professionals WHERE id=?');$q->execute([$pid]);$service=(string)$q->fetchColumn();$price=subscription_price($plan,$service);$reference='pulse-prof-'.$pid.'-'.$plan.'-'.bin2hex(random_bytes(6));$appUrl=rtrim((string)env('APP_URL'),'/');
-    $payload=['billingTypes'=>['CREDIT_CARD'],'chargeTypes'=>['RECURRENT'],'minutesToExpire'=>60,'externalReference'=>$reference,'callback'=>['successUrl'=>$appUrl.'/index.php?page=finance&checkout=success','cancelUrl'=>$appUrl.'/index.php?page=finance&checkout=cancel','expiredUrl'=>$appUrl.'/index.php?page=finance&checkout=expired'],'items'=>[['name'=>'Kinsman Pulse '.ucfirst($plan),'description'=>'Assinatura mensal ·
-    '.($service==='complete'?'Personal + Nutrição':($service==='nutrition'?'Nutrição':'Personal')),'quantity'=>1,'value'=>$price/100]],
-    'subscription'=>['cycle'=>'MONTHLY','nextDueDate'=>date('Y-m-d H:i:s',time()+(7*24*60*60))]];
+    $payload=['billingTypes'=>['CREDIT_CARD'],'chargeTypes'=>['RECURRENT'],'minutesToExpire'=>60,'externalReference'=>$reference,'callback'=>['successUrl'=>$appUrl.'/index.php?page=finance&checkout=success','cancelUrl'=>$appUrl.'/index.php?page=finance&checkout=cancel','expiredUrl'=>$appUrl.'/index.php?page=finance&checkout=expired'],'items'=>[['name'=>'Kinsman Pulse '.ucfirst($plan),'description'=>'Assinatura mensal · '.($service==='complete'?'Personal + Nutrição':($service==='nutrition'?'Nutrição':'Personal')),'quantity'=>1,'value'=>$price/100]],'subscription'=>['cycle'=>'MONTHLY','nextDueDate'=>date('Y-m-d H:i:s',time()+300)]];
     $checkout=asaas_request('POST','/checkouts',$payload);$checkoutId=(string)($checkout['id']??'');if($checkoutId==='')throw new RuntimeException('A Asaas não retornou o checkout.');
+    db()->prepare("UPDATE professional_subscriptions SET status='cancelled',ends_at=NOW() WHERE professional_id=? AND status='trial'")->execute([$pid]);
     db()->prepare('INSERT INTO professional_subscriptions(tenant_id,professional_id,plan_code,price_cents,status,asaas_checkout_id,external_reference) VALUES(?,?,?,?,\'cancelled\',?,?)')->execute([$u['tenant_id'],$pid,$plan,$price,$checkoutId,$reference]);
     redirect(asaas_checkout_url($checkoutId));
 }
@@ -341,7 +351,8 @@ function action_create_student(): never
 {
     $u=require_role(['admin','professional']); $prof=$u['role']==='professional'?professional_id($u):(int)$_POST['professional_id'];
     $check=db()->prepare('SELECT id,subscription_plan,subscription_status,trial_ends_at FROM professionals WHERE id=? AND tenant_id=?');$check->execute([$prof,$u['tenant_id']]);$professional=$check->fetch();if(!$professional)throw new RuntimeException('Profissional invalido.');
-    if($professional['subscription_status']!=='active')throw new RuntimeException('A assinatura do profissional não permite novos cadastros.');
+    $canCreateStudents=$professional['subscription_status']==='active'||($professional['subscription_status']==='trial'&&!empty($professional['trial_ends_at'])&&strtotime($professional['trial_ends_at'])>=time());
+    if(!$canCreateStudents)throw new RuntimeException('Seu teste terminou ou sua assinatura não permite novos cadastros.');
     $limit=subscription_limit($professional['subscription_plan']);$count=db()->prepare('SELECT COUNT(*) FROM students s JOIN users u ON u.id=s.user_id WHERE s.professional_id=? AND u.active=1');$count->execute([$prof]);$activeStudents=(int)$count->fetchColumn();
     if($limit!==null&&$activeStudents>=$limit)throw new RuntimeException('Limite do plano atingido. Faça upgrade para cadastrar outro aluno.');
     $password=(string)$_POST['password'];if(strlen($password)<8)throw new RuntimeException('Senha muito curta.'); db()->beginTransaction();
