@@ -42,18 +42,24 @@ document.addEventListener('DOMContentLoaded',()=>{
   document.addEventListener('click',e=>{
     if(innerWidth<=900&&sidebar?.classList.contains('open')&&!sidebar.contains(e.target)&&e.target!==button)sidebar.classList.remove('open');
   });
-  const bodyParts=document.querySelectorAll('.improved-body path, .improved-body ellipse');
-  if(bodyParts.length){
-    bodyParts.forEach(part=>{
-      part.addEventListener('click',()=>{
-        document.querySelectorAll('.improved-body .selected').forEach(sel=>sel.classList.remove('selected'));
-        part.classList.add('selected');
+  const muscleZones=document.querySelectorAll('.muscle-zone');
+  if(muscleZones.length){
+    const tip=document.createElement('div');
+    tip.className='muscle-tip';
+    tip.hidden=true;
+    document.body.append(tip);
+    muscleZones.forEach(zone=>{
+      const label=zone.querySelector('title');
+      if(!label)return;
+      zone.addEventListener('mouseenter',()=>{
+        tip.textContent=label.textContent;
+        tip.hidden=false;
+        const rect=zone.getBoundingClientRect();
+        tip.style.left=`${rect.left+rect.width/2}px`;
+        tip.style.top=`${Math.max(6,rect.top-36)}px`;
       });
-    });
-    document.addEventListener('click',e=>{
-      if(!e.target.closest('.improved-body')){
-        document.querySelectorAll('.improved-body .selected').forEach(sel=>sel.classList.remove('selected'));
-      }
+      zone.addEventListener('mouseleave',()=>{tip.hidden=true;});
+      zone.addEventListener('click',()=>{tip.hidden=true;});
     });
   }
   const cookieBanner=document.getElementById('cookieBanner');
