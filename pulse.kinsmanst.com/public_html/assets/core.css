@@ -1007,3 +1007,49 @@ input[type="date"] {
   -webkit-appearance: none;
   appearance: none;
 }
+.primary,
+.secondary,
+.ghost,
+.danger,
+.button {
+  max-width: 100%;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform .12s ease;
+}
+
+.primary:focus-visible,
+.secondary:focus-visible,
+.ghost:focus-visible,
+.danger:focus-visible,
+.button:focus-visible {
+  outline: 3px solid rgba(22, 118, 95, .45);
+  outline-offset: 2px;
+}
+
+.primary:active,
+.secondary:active,
+.ghost:active,
+.danger:active,
+.button:active {
+  transform: scale(.97);
+}
+
+@media (max-width: 700px) {
+  .fields-2 {
+    grid-template-columns: 1fr;
+  }
+}
+
+.fields-2 label {
+  min-width: 0;
+  max-width: 100%;
+}
+
+input[type="date"] {
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: 100%;
+  -webkit-appearance: none;
+  appearance: none;
+}
