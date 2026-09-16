@@ -961,32 +961,6 @@ textarea {
     gap: 10px 16px;
   }
 }
-
-
-.primary:focus-visible,
-.secondary:focus-visible,
-.danger:focus-visible {
-  outline: 3px solid rgba(22, 118, 95, .45);
-  outline-offset: 2px;
-}
-
-.primary:active,
-.secondary:active,
-.danger:active {
-  transform: scale(.97);
-}
-
-.primary,
-.secondary,
-.ghost,
-.danger,
-.button {
-  max-width: 100%;
-  touch-action: manipulation;
-  -webkit-tap-highlight-color: transparent;
-  transition: transform .12s ease, box-shadow .2s ease, background .2s ease;
-}
-
 .primary,
 .secondary,
 .ghost,
@@ -1021,6 +995,15 @@ textarea {
   }
 }
 
-input[type="date"] {
+.fields-2 label {
   min-width: 0;
+  max-width: 100%;
+}
+
+input[type="date"] {
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: 100%;
+  -webkit-appearance: none;
+  appearance: none;
 }
