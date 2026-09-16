@@ -1,5 +1,4 @@
 document.addEventListener('DOMContentLoaded',()=>{
-  // Keep the existing edit form and its values inside the selected exercise.
   const editForm=[...document.querySelectorAll('form')].find(form=>
     form.querySelector('[name="action"][value="save_workout_item"]') &&
     Number(form.querySelector('[name="item_id"]')?.value)>0);
@@ -43,7 +42,27 @@ document.addEventListener('DOMContentLoaded',()=>{
   document.addEventListener('click',e=>{
     if(innerWidth<=900&&sidebar?.classList.contains('open')&&!sidebar.contains(e.target)&&e.target!==button)sidebar.classList.remove('open');
   });
-
+  const bodyParts=document.querySelectorAll('.improved-body path, .improved-body ellipse');
+  if(bodyParts.length){
+    const caption=document.querySelector('.body-maps figcaption');
+    const defaultCaption=caption?.textContent??'';
+    bodyParts.forEach(part=>{
+      part.addEventListener('click',()=>{
+        document.querySelectorAll('.improved-body .selected').forEach(sel=>sel.classList.remove('selected'));
+        part.classList.add('selected');
+        if(caption)caption.textContent='Região selecionada — veja os exercícios ao lado';
+      });
+    });
+    if(caption){
+      document.addEventListener('click',e=>{
+        if(!e.target.closest('.improved-body')&&caption.dataset.restoring!=='1'){
+          caption.dataset.restoring='1';
+          caption.textContent=defaultCaption;
+          setTimeout(()=>delete caption.dataset.restoring,0);
+        }
+      });
+    }
+  }
   const cookieBanner=document.getElementById('cookieBanner');
   const cookieChoice=localStorage.getItem('kinsman_cookie_consent');
   if(cookieBanner&&!cookieChoice)cookieBanner.hidden=false;
@@ -57,14 +76,12 @@ document.addEventListener('DOMContentLoaded',()=>{
     localStorage.removeItem('kinsman_cookie_consent_at');
     if(cookieBanner)cookieBanner.hidden=false;
   });
-
   const colorInput=document.querySelector('input[name="primary_color"]');
   colorInput?.addEventListener('input',()=>{
     document.documentElement.style.setProperty('--brand',colorInput.value);
     document.documentElement.style.setProperty('--brand-dark',`color-mix(in srgb,${colorInput.value} 58%,#061f19)`);
     document.documentElement.style.setProperty('--brand-soft',`color-mix(in srgb,${colorInput.value} 11%,#fff)`);
   });
-
   const carousel=document.querySelector('[data-demo-carousel]');
   if(carousel){
     const slides=[...carousel.querySelectorAll('[data-demo-slide]')];
@@ -103,7 +120,6 @@ document.addEventListener('DOMContentLoaded',()=>{
     show(0);
     autoplay();
   }
-
   const workoutCards=[...document.querySelectorAll('.exercise-check-card')];
   if(workoutCards.length){
     workoutCards.forEach(card=>{
