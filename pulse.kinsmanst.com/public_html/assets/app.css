@@ -470,3 +470,41 @@ input[type="number"] {
 .brand-placeholder{display:grid;place-items:center;width:44px;height:44px;flex:0 0 44px;border-radius:11px;background:var(--brand-soft);color:var(--brand);font-family:'Manrope',sans-serif;font-weight:800}
 .brand-preview .brand-empty-logo{display:grid;place-items:center;width:64px;height:64px;border:1px dashed rgba(255,255,255,.55);border-radius:14px;color:#fff;font-size:.75rem;font-weight:800}
 @media(max-width:900px){.menu-toggle{display:inline-flex!important;flex:0 0 44px;align-items:center;justify-content:center;width:44px;height:44px;margin:0;padding:0;border:1px solid #d4e4dd;border-radius:10px;background:#edf5f2;color:#173a34;font-size:28px;font-weight:700;line-height:1;cursor:pointer}}
+
+
+/* Cartões de fichas: ações legíveis e alinhadas à interface móvel. */
+.card-grid .content-card .actions .button,
+.card-grid .content-card .actions .danger {
+  min-height: 44px;
+  padding: 10px 16px;
+  border-radius: 10px;
+  font-family: 'DM Sans', Arial, sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: 0;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+.card-grid .content-card .actions .secondary.button {
+  background: #edf5f2 !important;
+  color: #164d3f !important;
+  border: 1px solid #d3e4dc !important;
+}
+
+.card-grid .content-card .actions .secondary.button:hover {
+  background: #e0eee8 !important;
+  color: #123f36 !important;
+}
+
+.card-grid .content-card .actions .danger {
+  background: #fff3f4 !important;
+  color: #aa3d47 !important;
+  border: 1px solid #f2d1d5 !important;
+}
+
+.card-grid .content-card .actions .danger:hover {
+  background: #fee8eb !important;
+  color: #91323c !important;
+}
