@@ -1,0 +1,6 @@
+---
+deployment:
+  tasks:
+    - export DEPLOYPATH=/home4/israe196/pulse.kinsmanst.com/
+    - /bin/cp -R pulse.kinsmanst.com/app "${DEPLOYPATH}"
+    - /bin/cp -R pulse.kinsmanst.com/public_html "${DEPLOYPATH}"
