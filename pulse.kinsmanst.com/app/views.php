@@ -5,8 +5,8 @@ function nav_items(array $u): array
 {
     $items = match ($u['role']) {
         'admin' => [['dashboard','Visao geral','home'],['users','Profissionais','users'],['exercises','Banco de exercicios','catalog'],['finance','Financeiro','finance']],
-        'professional' => [['dashboard','Visao geral','home'],['students','Meus alunos','users'],['muscle-map','Mapa muscular','body'],['exercises','Catalogo de exercicios','catalog'],['finance','Planos e financeiro','finance'],['branding','Minha marca','settings']],
-        default => [['dashboard','Inicio','home'],['my-anamnesis','Minha anamnese','document'],['my-plan','Meu plano','nutrition'],['my-workouts','Meus treinos','workout'],['my-progress','Evolucao','progress'],['messages','Mensagens','message']],
+        'professional' => [['dashboard','Visao geral','home'],['students','Meus alunos','users'],['muscle-map','Mapa muscular','body'],['exercises','Catalogo de exercicios','catalog'],['finance','Planos e financeiro','finance'],['branding','Minha marca','settings'],['account','Minha conta','settings']],
+        default => [['dashboard','Inicio','home'],['my-anamnesis','Minha anamnese','document'],['my-plan','Meu plano','nutrition'],['my-workouts','Meus treinos','workout'],['my-progress','Evolucao','progress'],['messages','Mensagens','message'],['account','Minha conta','settings']],
     };
     if (($u['role'] ?? '') !== 'student') return $items;
     $service = (string)($u['access_service_type'] ?? 'complete');
