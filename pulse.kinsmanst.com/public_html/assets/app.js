@@ -36,11 +36,21 @@ document.addEventListener('DOMContentLoaded',()=>{
     form.addEventListener('submit',event=>{if(!options.some(option=>option.checked))event.preventDefault();});
     update();
   }
-  const button=document.querySelector('.menu-toggle');
-  const sidebar=document.querySelector('.sidebar');
-  button?.addEventListener('click',()=>sidebar?.classList.toggle('open'));
-  document.addEventListener('click',e=>{
-    if(innerWidth<=900&&sidebar?.classList.contains('open')&&!sidebar.contains(e.target)&&e.target!==button)sidebar.classList.remove('open');
+  const button = document.querySelector('.menu-toggle');
+  const sidebar = document.querySelector('.sidebar');
+
+  button?.addEventListener('click', event => {
+    event.stopPropagation();
+    sidebar?.classList.toggle('open');
+    button.setAttribute('aria-expanded', String(sidebar?.classList.contains('open')));
+  });
+
+  document.addEventListener('click', event => {
+    const clickedOutsideMenu = !sidebar?.contains(event.target) && !button?.contains(event.target);
+    if (innerWidth <= 900 && sidebar?.classList.contains('open') && clickedOutsideMenu) {
+      sidebar.classList.remove('open');
+      button?.setAttribute('aria-expanded', 'false');
+    }
   });
   const muscleZones=document.querySelectorAll('.muscle-zone');
   if(muscleZones.length){
