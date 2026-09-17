@@ -81,7 +81,20 @@ function action_login(): never
     db()->prepare('UPDATE users SET last_login_at=NOW() WHERE id=?')->execute([$u['id']]); audit('login'); redirect(url());
 }
 
-function action_register_professional(): never
+function assert_strong_password(string $password): void
+{
+    $valid = strlen($password) >= 8
+        && preg_match('/[a-z]/', $password)
+        && preg_match('/[A-Z]/', $password)
+        && preg_match('/\d/', $password)
+        && preg_match('/[^a-zA-Z\d]/', $password);
+
+    if (!$valid) {
+        throw new RuntimeException(
+            'Use uma senha com pelo menos 8 caracteres, letra maiúscula, letra minúscula, número e símbolo.'
+        );
+    }
+}
 {
     if(current_user()) redirect(url());
     $name=trim((string)($_POST['name']??''));
