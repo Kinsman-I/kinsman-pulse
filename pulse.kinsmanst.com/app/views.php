@@ -58,7 +58,8 @@ function render(string $title, callable $body, bool $guest = false): void
       <aside class="sidebar" id="main-menu">
         <a class="brand" href="<?= url() ?>">
           <?php if (!empty($u['logo_path'])): ?><img src="<?= e($u['logo_path']) ?>" alt="Logo de <?= e($u['tenant_name']) ?>">
-          <?php else: ?><img class="official-logo" src="assets/images/logo-kinsman.png" alt="Logo Kinsman"><?php endif; ?>
+          <?php elseif ($u['role'] === 'admin'): ?><img class="official-logo" src="assets/images/logo-kinsman.png" alt="Logo Kinsman">
+          <?php else: ?><span class="brand-placeholder" aria-hidden="true"><?= e(strtoupper(substr((string) $u['tenant_name'], 0, 1))) ?></span><?php endif; ?>
           <span><strong><?= e($u['tenant_name']) ?></strong><small>Pulse</small></span>
         </a>
         <nav><?php foreach(nav_items($u) as [$page,$label,$icon]): ?><a class="<?= (($_GET['page'] ?? 'dashboard') === $page) ? 'active' : '' ?>" href="<?= url($page) ?>"><i><?= interface_icon($icon) ?></i><span><?= e($label) ?></span></a><?php endforeach; ?></nav>

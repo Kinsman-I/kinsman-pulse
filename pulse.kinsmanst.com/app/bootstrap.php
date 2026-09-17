@@ -80,13 +80,30 @@ function current_user(): ?array
     static $user;
     if ($user !== null) return $user ?: null;
     $stmt = db()->prepare("SELECT u.*,
-      COALESCE(ownp.brand_name, studentp.brand_name, t.name) tenant_name,
-      COALESCE(ownp.logo_path, studentp.logo_path, t.logo_path) logo_path,
-      COALESCE(ownp.primary_color, studentp.primary_color, t.primary_color) primary_color,
+      CASE
+        WHEN u.role='professional' THEN COALESCE(NULLIF(ownp.brand_name, ''), 'Minha marca')
+        WHEN u.role='student' THEN COALESCE(NULLIF(studentp.brand_name, ''), t.name)
+        ELSE t.name
+      END tenant_name,
+      CASE
+        WHEN u.role='professional' THEN ownp.logo_path
+        WHEN u.role='student' THEN studentp.logo_path
+        ELSE t.logo_path
+      END logo_path,
+      CASE
+        WHEN u.role='professional' THEN COALESCE(ownp.primary_color, '#16765f')
+        WHEN u.role='student' THEN COALESCE(studentp.primary_color, t.primary_color, '#16765f')
+        ELSE COALESCE(t.primary_color, '#16765f')
+      END primary_color,
+      ownp.brand_name own_brand_name,
       COALESCE(ownp.whatsapp, studentp.whatsapp) brand_whatsapp,
       COALESCE(ownp.instagram, studentp.instagram) brand_instagram,
       COALESCE(ownp.welcome_message, studentp.welcome_message) welcome_message,
-      COALESCE(ownp.footer_text, studentp.footer_text, 'Tecnologia Kinsman') footer_text
+      CASE
+        WHEN u.role='professional' THEN ownp.footer_text
+        WHEN u.role='student' THEN COALESCE(studentp.footer_text, 'Tecnologia Kinsman')
+        ELSE COALESCE(t.name, 'Tecnologia Kinsman')
+      END footer_text
       ,COALESCE(stu.service_type, ownp.service_type, 'complete') access_service_type
       FROM users u JOIN tenants t ON t.id=u.tenant_id
       LEFT JOIN professionals ownp ON ownp.user_id=u.id
