@@ -355,4 +355,4 @@ input[type="number"] {
 /* Menu compacto para celular e identidade inicial sem logo. */
 .brand-placeholder{display:grid;place-items:center;width:44px;height:44px;flex:0 0 44px;border-radius:11px;background:var(--brand-soft);color:var(--brand);font-family:'Manrope',sans-serif;font-weight:800}
 .brand-preview .brand-empty-logo{display:grid;place-items:center;width:64px;height:64px;border:1px dashed rgba(255,255,255,.55);border-radius:14px;color:#fff;font-size:.75rem;font-weight:800}
-@media(max-width:900px){.menu-toggle{display:inline-flex!important;flex:0 0 44px;align-items:center;justify-content:center;width:44px;height:44px;margin:0;padding:0;border:1px solid #d4e4dd;border-radius:10px;background:#edf5f2;color:var(--ink);cursor:pointer}.menu-toggle::before{content:"☰";font-size:26px;font-weight:700;line-height:1}.menu-toggle span{display:none!important}}
+@media(max-width:900px){.menu-toggle{display:inline-flex!important;flex:0 0 44px;align-items:center;justify-content:center;width:44px;height:44px;margin:0;padding:0;border:1px solid #d4e4dd;border-radius:10px;background:#edf5f2;color:#173a34;font-size:28px;font-weight:700;line-height:1;cursor:pointer}}
