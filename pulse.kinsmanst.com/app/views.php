@@ -55,7 +55,7 @@ function render(string $title, callable $body, bool $guest = false): void
     <body class="<?= $guest ? 'guest-body' : 'app-body' ?>">
     <?php if ($guest): ?><header class="guest-top"><a class="brand" href="<?= url('home') ?>"><img class="official-logo" src="assets/images/logo-kinsman.png" alt="Logo Kinsman"><span><strong>Kinsman Pulse</strong><small>Acompanhamento inteligente</small></span></a><nav class="guest-nav"><a href="<?=url('home')?>#recursos">Recursos</a><a href="<?=url('terms')?>">Termos</a><a class="guest-login" href="<?= url('login') ?>">Entrar</a></nav></header><main class="guest-shell"><?php $body(); ?></main><footer class="guest-footer"><span>© <?=date('Y')?> Kinsman Tecnologia</span><nav><a href="<?=url('privacy')?>">Privacidade e LGPD</a><a href="<?=url('terms')?>">Termos de Uso</a><a href="<?=url('cookies')?>">Política de Cookies</a></nav></footer>
     <?php else: ?>
-      <aside class="sidebar">
+      <aside class="sidebar" id="main-menu">
         <a class="brand" href="<?= url() ?>">
           <?php if (!empty($u['logo_path'])): ?><img src="<?= e($u['logo_path']) ?>" alt="Logo de <?= e($u['tenant_name']) ?>">
           <?php else: ?><img class="official-logo" src="assets/images/logo-kinsman.png" alt="Logo Kinsman"><?php endif; ?>
