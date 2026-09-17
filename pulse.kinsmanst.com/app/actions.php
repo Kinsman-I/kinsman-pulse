@@ -4,7 +4,8 @@ declare(strict_types=1);
 function handle_post(): void
 {
     if ($_SERVER['REQUEST_METHOD'] !== 'POST') return;
-     security_request_guard();
+    security_request_guard();
+    verify_csrf();
     $action = (string)($_POST['action'] ?? '');
     try {
         $turnstileActions=['login'=>'login','register_professional'=>'register','forgot'=>'forgot_password'];
