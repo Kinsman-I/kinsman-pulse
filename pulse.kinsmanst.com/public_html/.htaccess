@@ -1,6 +1,11 @@
 Options -Indexes +FollowSymLinks
 DirectoryIndex index.php
 
+# ---------- Arquivos sensíveis ----------
+<FilesMatch "^(\.env|\.git|error_log|composer\.(json|lock)|package(-lock)?\.json|\.(sql|zip|tar|gz|bak|log|ini|sh))$">
+    Require all denied
+</FilesMatch>
+
 <Files ".env">
     Require all denied
 </Files>
@@ -8,3 +13,21 @@ DirectoryIndex index.php
 <Files "error_log">
     Require all denied
 </Files>
+
+<IfModule mod_rewrite.c>
+RewriteEngine On
+
+# HTTPS forçado. Se o cPanel já tiver "Force HTTPS" ativo, comente este bloco.
+RewriteCond %{HTTPS} off
+RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+
+# Bloqueia acesso direto a .git (defesa extra)
+RewriteRule ^\.git - [F,L]
+
+# Impede execucao de PHP dentro de uploads
+RewriteRule ^uploads/.*\.(php|phtml|php[0-9]|phar|inc)$ - [F,L]
+
+# Metodos HTTP perigosos
+RewriteCond %{REQUEST_METHOD} ^(TRACE|TRACK|CONNECT)$
+RewriteRule .* - [F,L]
+</IfModule>
