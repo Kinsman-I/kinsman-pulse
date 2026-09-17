@@ -95,6 +95,8 @@ function assert_strong_password(string $password): void
         );
     }
 }
+
+function action_register_professional(): never
 {
     if(current_user()) redirect(url());
     $name=trim((string)($_POST['name']??''));
