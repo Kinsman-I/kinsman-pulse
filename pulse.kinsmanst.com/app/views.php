@@ -48,7 +48,7 @@ function render(string $title, callable $body, bool $guest = false): void
     <?php if ($publicPage): ?><link rel="canonical" href="<?= e($canonicalUrl) ?>"><meta name="description" content="<?= e($canonicalPage === 'home' ? 'Kinsman Pulse: organize alunos, treinos, planos alimentares e evolução para personal trainers e nutricionistas.' : $title . ' do Kinsman Pulse.') ?>"><meta property="og:type" content="website"><meta property="og:url" content="<?= e($canonicalUrl) ?>"><meta property="og:title" content="<?= e($title) ?> · Kinsman Pulse"><meta property="og:description" content="Organize alunos, treinos, planos alimentares e evolução em um só lugar."><meta property="og:site_name" content="Kinsman Pulse"><meta name="twitter:card" content="summary">
     <?php endif; ?><link rel="icon" type="image/png" href="/assets/images/logo-kinsman.png?v=4"><link rel="apple-touch-icon" href="/assets/images/logo-kinsman.png?v=4">
     <meta name="theme-color" content="<?= e($tenantColor) ?>"><title><?= e($title) ?> · <?= e((string)env('APP_NAME')) ?></title>
-    <link rel="stylesheet" href="assets/app.css?v=36">
+    <link rel="stylesheet" href="assets/app.css?v=37">
     <link rel="stylesheet" href="assets/core.css?v=24">
     <?php if ($guest): ?><link rel="stylesheet" href="assets/auth.css?v=23"><?php endif; ?>
     <style>:root{--brand:<?= e($tenantColor) ?>;--brand-dark:color-mix(in srgb,var(--brand) 58%,#061f19);--brand-soft:color-mix(in srgb,var(--brand) 11%,#fff)}</style></head>
