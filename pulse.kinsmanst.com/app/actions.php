@@ -106,7 +106,11 @@ function assert_strong_password(string $password): void
     $plan=(string)($_POST['plan']??'basic');
     $billingStart=(string)($_POST['billing_start']??'trial');
     if($name===''||!filter_var($email,FILTER_VALIDATE_EMAIL)) throw new RuntimeException('Informe nome e e-mail válidos.');
-    if(strlen($password)<8||!hash_equals($password,$confirmation)) throw new RuntimeException('Use uma senha de 8 caracteres e confirme corretamente.');
+      assert_strong_password($password);
+
+if (!hash_equals($password, $confirmation)) {
+    throw new RuntimeException('As senhas não coincidem.');
+}
     if(!in_array($service,['personal','nutrition','complete'],true)||!in_array($plan,['basic','plus','premium'],true)||!in_array($billingStart,['trial','now'],true)) throw new RuntimeException('Modalidade, plano ou forma de início inválidos.');
     if(empty($_POST['accept_terms'])) throw new RuntimeException('Você precisa aceitar os Termos de Uso e a Política de Privacidade.');
     $exists=db()->prepare('SELECT id FROM users WHERE email=? LIMIT 1');$exists->execute([$email]);
