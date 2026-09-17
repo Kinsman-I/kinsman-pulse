@@ -438,7 +438,12 @@ function action_copy_global_exercise(): never
     if(!$valid->fetchColumn())throw new RuntimeException('Profissional invalido.');
     $q=db()->prepare('SELECT * FROM global_exercises WHERE id=? AND active=1');$q->execute([$globalId]);$exercise=$q->fetch();
     if(!$exercise)throw new RuntimeException('Exercicio padrao nao encontrado.');
-    db()->prepare('INSERT INTO exercise_catalog(tenant_id,professional_id,name,muscle_group,equipment,instructions,image_path,video_url) VALUES(?,?,?,?,?,?,?,?) ON DUPLICATE KEY UPDATE muscle_group=VALUES(muscle_group),equipment=VALUES(equipment),instructions=VALUES(instructions)')->execute([$u['tenant_id'],$pid,$exercise['name'],$exercise['muscle_group'],$exercise['equipment'],$exercise['instructions'],$exercise['image_path'],$exercise['video_url']]);
+    db()->prepare('INSERT INTO exercise_catalog(tenant_id,professional_id,name,muscle_group,equipment,instructions,image_path,video_url) VALUES(?,?,?,?,?,?,?,?) ON DUPLICATE KEY UPDATE
+muscle_group=VALUES(muscle_group),
+equipment=VALUES(equipment),
+instructions=VALUES(instructions),
+image_path=VALUES(image_path),
+video_url=VALUES(video_url)')->execute([$u['tenant_id'],$pid,$exercise['name'],$exercise['muscle_group'],$exercise['equipment'],$exercise['instructions'],$exercise['image_path'],$exercise['video_url']]);
     flash('success','Exercicio adicionado ao seu catalogo. Agora voce pode personaliza-lo.');redirect(url('exercises',['prof'=>$pid]));
 }
 
@@ -452,7 +457,12 @@ function action_copy_all_global_exercises(): never
           SELECT ?,?,g.name,g.muscle_group,g.equipment,g.instructions,g.image_path,g.video_url
           FROM global_exercises g
           WHERE g.active=1
-          ON DUPLICATE KEY UPDATE muscle_group=VALUES(muscle_group),equipment=VALUES(equipment),instructions=VALUES(instructions)";
+          ON DUPLICATE KEY UPDATE
+muscle_group=VALUES(muscle_group),
+equipment=VALUES(equipment),
+instructions=VALUES(instructions),
+image_path=VALUES(image_path),
+video_url=VALUES(video_url)";
     db()->prepare($sql)->execute([$u['tenant_id'],$pid]);
     flash('success','Biblioteca completa adicionada ao catálogo do profissional.');
     redirect(url('exercises',['prof'=>$pid]));
