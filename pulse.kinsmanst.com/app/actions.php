@@ -265,12 +265,45 @@ function password_reset_email_html(array $user,string $link,array $brand=[]): st
 
 function action_reset(): never
 {
-    $password=(string)$_POST['password']; if(strlen($password)<8) throw new RuntimeException('A senha precisa ter pelo menos 8 caracteres.');
-    if(!hash_equals($password,(string)$_POST['password_confirmation'])) throw new RuntimeException('As senhas nao coincidem.');
-    $hash=hash('sha256',(string)$_POST['token']); $stmt=db()->prepare('SELECT * FROM password_resets WHERE token_hash=? AND used_at IS NULL AND expires_at>NOW()'); $stmt->execute([$hash]); $reset=$stmt->fetch();
-    if(!$reset) throw new RuntimeException('Link invalido ou expirado.');
-    db()->beginTransaction(); db()->prepare('UPDATE users SET password_hash=? WHERE id=?')->execute([password_hash($password,PASSWORD_DEFAULT),$reset['user_id']]); db()->prepare('UPDATE password_resets SET used_at=NOW() WHERE id=?')->execute([$reset['id']]); db()->commit();
-    flash('success','Senha alterada. Entre com a nova senha.'); redirect(url('login'));
+    $password = (string)($_POST['password'] ?? '');
+    $confirmation = (string)($_POST['password_confirmation'] ?? '');
+
+    assert_strong_password($password);
+
+    if (!hash_equals($password, $confirmation)) {
+        throw new RuntimeException('As senhas não coincidem.');
+    }
+
+    $hash = hash('sha256', (string)($_POST['token'] ?? ''));
+
+    $stmt = db()->prepare(
+        'SELECT * FROM password_resets
+         WHERE token_hash=? AND used_at IS NULL AND expires_at>NOW()'
+    );
+    $stmt->execute([$hash]);
+    $reset = $stmt->fetch();
+
+    if (!$reset) {
+        throw new RuntimeException('Link inválido ou expirado.');
+    }
+
+    db()->beginTransaction();
+
+    db()->prepare(
+        'UPDATE users SET password_hash=? WHERE id=?'
+    )->execute([
+        password_hash($password, PASSWORD_DEFAULT),
+        $reset['user_id']
+    ]);
+
+    db()->prepare(
+        'UPDATE password_resets SET used_at=NOW() WHERE id=?'
+    )->execute([$reset['id']]);
+
+    db()->commit();
+
+    flash('success', 'Senha alterada. Entre com a nova senha.');
+    redirect(url('login'));
 }
 
 function professional_id(array $u): int
