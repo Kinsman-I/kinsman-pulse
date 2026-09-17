@@ -314,6 +314,39 @@ input[type="number"] {
   color: #c8ddd4;
 }
 
+  .my-exercise-list article {
+  position: relative;
+}
+
+.exercise-video-corner {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 11px;
+  border: 1px solid #cfe0d7;
+  border-radius: 8px;
+  background: #f4f8f5;
+  color: #124438;
+  font-size: 12px;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.exercise-video-corner:hover {
+  background: #e4f0e8;
+}
+
+@media (max-width: 640px) {
+  .exercise-video-corner {
+    position: static;
+    width: fit-content;
+    margin: 10px 0 0;
+  }
+}
+
 .guest-body:has(.pulse-landing) .guest-footer a {
   color: #d9f262;
 }
