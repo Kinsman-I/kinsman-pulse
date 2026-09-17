@@ -34,7 +34,7 @@ session_name((string) env('SESSION_NAME', 'kinsman_pulse_session'));
 session_set_cookie_params([
     'lifetime' => 0,
     'path' => '/',
-    'secure' => str_starts_with((string) env('APP_URL', ''), 'https://'),
+    'secure' => true, // aplicacao roda exclusivamente sob HTTPS,
     'httponly' => true,
     'samesite' => 'Lax',
 ]);
