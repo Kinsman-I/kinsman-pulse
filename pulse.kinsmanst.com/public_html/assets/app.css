@@ -508,3 +508,19 @@ input[type="number"] {
   background: #fee8eb !important;
   color: #91323c !important;
 }
+
+
+/* Prontuário profissional: histórico de evolução com leitura rápida. */
+.professional-progress { padding: 30px; }
+.professional-progress-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; margin-bottom: 24px; }
+.professional-progress-head h2 { margin: 5px 0 6px; }
+.professional-progress-head > div > p:last-child { margin: 0; font-size: .92rem; }
+.professional-progress-list { display: grid; gap: 10px; }
+.professional-progress-list article { display: grid; grid-template-columns: 112px minmax(150px, .72fr) minmax(0, 1.5fr); align-items: center; gap: 20px; padding: 17px 18px; border: 1px solid var(--line); border-radius: 14px; background: #fbfdfc; }
+.professional-progress-list time { color: #173f36; font-family: 'Manrope', sans-serif; font-size: .86rem; font-weight: 700; }
+.professional-progress-weight { display: flex; flex-direction: column; gap: 3px; }
+.professional-progress-weight small { color: var(--muted); font-size: .7rem; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; }
+.professional-progress-weight strong { color: var(--brand-dark); font-family: 'Manrope', sans-serif; font-size: 1.08rem; line-height: 1.2; }
+.professional-progress-list p { margin: 0; color: #536f66; font-size: .88rem; line-height: 1.45; }
+@media (max-width: 700px) { .professional-progress { padding: 22px; }.professional-progress-head { align-items: flex-start; flex-direction: column; gap: 10px; }.professional-progress-list article { grid-template-columns: 1fr 1fr; gap: 12px; }.professional-progress-list p { grid-column: 1 / -1; } }
+@media (max-width: 420px) { .professional-progress { padding: 18px; }.professional-progress-list article { grid-template-columns: 1fr; gap: 9px; }.professional-progress-list p { grid-column: auto; } }
