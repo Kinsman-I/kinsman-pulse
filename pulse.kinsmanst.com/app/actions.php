@@ -10,7 +10,7 @@ function handle_post(): void
         $turnstileActions=['login'=>'login','register_professional'=>'register','forgot'=>'forgot_password'];
         if(isset($turnstileActions[$action])) verify_turnstile($turnstileActions[$action]);
         $u=current_user();
-        if(($u['role']??null)==='professional'&&!in_array($action,['start_asaas_checkout','cancel_subscription'],true)&&professional_access_blocked($u)) throw new RuntimeException('Sua assinatura não está ativa. Acesse o Financeiro para contratar ou regularizar o plano.');
+        if(($u['role']??null)==='professional'&&!in_array($action,['start_asaas_checkout','cancel_subscription','request_account_deletion'],true)&&professional_access_blocked($u)) throw new RuntimeException('Sua assinatura não está ativa. Acesse o Financeiro para contratar ou regularizar o plano.');
         $professionalOnly=['save_brand','create_student','update_record','add_assessment','create_workout','generate_workout_draft','save_workout_item','delete_workout_item','publish_workout','delete_workout','reply_student_message','create_food_plan','save_meal','delete_meal','publish_food_plan'];
         if(($u['role']??null)==='admin' && in_array($action,$professionalOnly,true)) throw new RuntimeException('Esta operação é exclusiva do profissional responsável pelo aluno.');
         match ($action) {
@@ -23,6 +23,7 @@ function handle_post(): void
             'update_professional_plan' => action_update_professional_plan(),
             'start_asaas_checkout' => action_start_asaas_checkout(),
             'cancel_subscription' => action_cancel_subscription(),
+            'request_account_deletion' => action_request_account_deletion(),
             'create_student' => action_create_student(),
             'update_record' => action_update_record(),
             'add_assessment' => action_add_assessment(),
@@ -349,6 +350,45 @@ function action_cancel_subscription(): never
     db()->prepare("UPDATE professional_subscriptions SET status='cancelled',ends_at=? WHERE professional_id=? AND status='active'")->execute([$accessUntil,$pid]);
     db()->commit();audit('subscription.cancelled','professional',$pid,['access_until'=>$accessUntil]);
     flash('success','Renovação cancelada. Seu acesso ficará disponível até '.date('d/m/Y',strtotime($accessUntil)).'.');redirect(url('finance'));
+}
+
+function action_request_account_deletion(): never
+{
+    $u=require_auth();
+    if($u['role']==='admin')throw new RuntimeException('A conta de administrador não pode ser excluída por esta tela. Entre em contato com o suporte Kinsman.');
+    $password=(string)($_POST['current_password']??'');
+    $confirmation=trim((string)($_POST['delete_confirmation']??''));
+    if(!password_verify($password,(string)$u['password_hash']))throw new RuntimeException('A senha informada não confere.');
+    if($confirmation!=='EXCLUIR MINHA CONTA')throw new RuntimeException('Digite exatamente EXCLUIR MINHA CONTA para confirmar.');
+
+    $professionalId=null;
+    if($u['role']==='professional'){
+        $q=db()->prepare('SELECT id FROM professionals WHERE user_id=? AND tenant_id=?');$q->execute([$u['id'],$u['tenant_id']]);$professionalId=(int)$q->fetchColumn();
+        if(!$professionalId)throw new RuntimeException('Não foi possível localizar o cadastro profissional.');
+        $q=db()->prepare("SELECT asaas_subscription_id FROM professional_subscriptions WHERE professional_id=? AND status IN ('active','past_due') AND asaas_subscription_id IS NOT NULL ORDER BY id DESC LIMIT 1");$q->execute([$professionalId]);$asaasSubscriptionId=(string)$q->fetchColumn();
+        if($asaasSubscriptionId!=='')asaas_request('PUT','/subscriptions/'.rawurlencode($asaasSubscriptionId),['status'=>'INACTIVE']);
+    }
+
+    db()->beginTransaction();
+    try {
+        db()->prepare('INSERT INTO account_deletion_requests(tenant_id,user_id,user_role,requested_at,scheduled_purge_at,status) VALUES(?,?,?,NOW(),DATE_ADD(NOW(), INTERVAL 30 DAY),\'pending\')')->execute([$u['tenant_id'],$u['id'],$u['role']]);
+        if($professionalId!==null){
+            db()->prepare("UPDATE professionals SET subscription_status='cancelled',access_until=NOW(),cancellation_requested_at=NOW() WHERE id=?")->execute([$professionalId]);
+            db()->prepare("UPDATE professional_subscriptions SET status='cancelled',ends_at=NOW() WHERE professional_id=? AND status IN ('active','past_due','trial')")->execute([$professionalId]);
+            db()->prepare('UPDATE users su JOIN students s ON s.user_id=su.id SET su.active=0 WHERE s.professional_id=?')->execute([$professionalId]);
+        }
+        db()->prepare('UPDATE password_resets SET used_at=COALESCE(used_at,NOW()) WHERE user_id=?')->execute([$u['id']]);
+        db()->prepare('UPDATE users SET active=0 WHERE id=?')->execute([$u['id']]);
+        db()->prepare('INSERT INTO audit_logs(tenant_id,user_id,action,entity_type,entity_id,details,ip_address) VALUES(?,?,?,?,?,?,?)')->execute([$u['tenant_id'],$u['id'],'account.deletion_requested','user',$u['id'],json_encode(['role'=>$u['role'],'professional_id'=>$professionalId,'scheduled_purge_at'=>date('Y-m-d H:i:s',time()+30*86400)]),$_SERVER['REMOTE_ADDR']??null]);
+        db()->commit();
+    } catch(Throwable $e) {
+        if(db()->inTransaction())db()->rollBack();
+        throw $e;
+    }
+    logout();
+    session_start();
+    flash('success','Sua conta foi desativada e a solicitação de exclusão foi registrada.');
+    redirect(url('login'));
 }
 
 function action_update_professional_plan(): never
