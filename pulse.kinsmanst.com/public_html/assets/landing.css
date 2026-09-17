@@ -199,3 +199,14 @@
 .pl-contact-button svg {
   flex-shrink: 0;
 }
+
+/* Cole este bloco no final de public_html/assets/landing.css. */
+.guest-footer,
+.guest-footer span,
+.guest-footer a {
+  color: #123e33 !important;
+}
+
+.guest-footer a:hover {
+  color: #176b50 !important;
+}
