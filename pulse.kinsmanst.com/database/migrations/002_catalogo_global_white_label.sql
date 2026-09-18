@@ -1,3 +1,4 @@
+-- V2: complementa o perfil profissional com dados de white-label e catálogo.
 SET NAMES utf8mb4;
 
 ALTER TABLE professionals

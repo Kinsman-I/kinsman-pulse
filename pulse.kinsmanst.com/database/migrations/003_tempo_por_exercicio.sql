@@ -1,3 +1,4 @@
+-- V3: adiciona tempos de início e conclusão ao log de exercício.
 SET NAMES utf8mb4;
 
 ALTER TABLE workout_logs

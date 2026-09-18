@@ -1,3 +1,4 @@
+-- V7: adiciona referências necessárias à cobrança Asaas.
 ALTER TABLE professionals
   ADD COLUMN asaas_customer_id VARCHAR(80) NULL AFTER subscription_status;
 

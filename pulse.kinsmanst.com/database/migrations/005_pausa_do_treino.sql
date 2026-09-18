@@ -1,3 +1,4 @@
+-- V5: registra pausa e tempo acumulado em sessões de treino.
 SET NAMES utf8mb4;
 
 ALTER TABLE workout_sessions

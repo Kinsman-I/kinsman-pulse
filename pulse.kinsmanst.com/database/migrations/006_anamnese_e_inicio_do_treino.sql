@@ -1,3 +1,4 @@
+-- V6: adiciona cronômetro de sessão e informações de anamnese.
 SET NAMES utf8mb4;
 
 ALTER TABLE workout_sessions

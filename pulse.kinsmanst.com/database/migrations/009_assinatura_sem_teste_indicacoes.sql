@@ -1,3 +1,4 @@
+-- V9: evolui assinatura, cancelamento e programa de indicações.
 ALTER TABLE professionals
   ADD COLUMN access_until DATETIME NULL AFTER trial_ends_at,
   ADD COLUMN cancellation_requested_at DATETIME NULL AFTER access_until,

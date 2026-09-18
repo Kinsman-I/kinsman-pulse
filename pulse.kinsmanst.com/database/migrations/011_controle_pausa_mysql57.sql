@@ -1,3 +1,4 @@
+-- V11: aplica campos do cronômetro de modo compatível com MySQL 5.7.
 SET NAMES utf8mb4;
 
 SET @sql = IF((SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='workout_sessions' AND COLUMN_NAME='timer_started_at')=0,'ALTER TABLE workout_sessions ADD COLUMN timer_started_at DATETIME NULL AFTER started_at','SELECT 1');

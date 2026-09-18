@@ -1,3 +1,4 @@
+-- V8: inclui o término do teste no autocadastro profissional.
 ALTER TABLE professionals
   ADD COLUMN trial_ends_at DATETIME NULL AFTER subscription_status;
 

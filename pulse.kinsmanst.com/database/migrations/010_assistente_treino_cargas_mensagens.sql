@@ -1,3 +1,4 @@
+-- V10: torna a evolução de treino compatível com bancos já atualizados.
 SET NAMES utf8mb4;
 
 SET @sql = IF((SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='student_anamneses' AND COLUMN_NAME='training_days_per_week')=0,'ALTER TABLE student_anamneses ADD COLUMN training_days_per_week TINYINT UNSIGNED NULL AFTER daily_routine','SELECT 1');

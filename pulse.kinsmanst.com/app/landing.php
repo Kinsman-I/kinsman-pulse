@@ -1,4 +1,5 @@
 <?php declare(strict_types=1); ?>
+<!-- Landing pública isolada: utilize as classes pl-* de assets/landing.css. -->
 <link rel="stylesheet" href="assets/landing.css?v=41">
 <div class="pulse-landing">
 <section class="pl-hero">

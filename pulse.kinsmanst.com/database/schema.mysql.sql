@@ -1,6 +1,9 @@
+-- Esquema inicial do Kinsman Pulse.
+-- Ordem proposital: tenancy e usuários, domínio clínico, conteúdo e integração.
 SET NAMES utf8mb4;
 SET FOREIGN_KEY_CHECKS=0;
 
+-- Organização raiz usada para isolar os dados de cada operação.
 CREATE TABLE IF NOT EXISTS tenants (
   id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   name VARCHAR(160) NOT NULL,
@@ -12,6 +15,7 @@ CREATE TABLE IF NOT EXISTS tenants (
   updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- Identidades autenticáveis: admin, profissional e aluno.
 CREATE TABLE IF NOT EXISTS users (
   id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   tenant_id BIGINT UNSIGNED NOT NULL,
@@ -29,6 +33,7 @@ CREATE TABLE IF NOT EXISTS users (
   INDEX idx_users_tenant_role (tenant_id, role)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- Tokens de recuperação armazenados somente como hash.
 CREATE TABLE IF NOT EXISTS password_resets (
   id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   user_id BIGINT UNSIGNED NOT NULL,
@@ -40,6 +45,7 @@ CREATE TABLE IF NOT EXISTS password_resets (
   INDEX idx_reset_expiration (expires_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- Perfil profissional, marca própria e situação de assinatura.
 CREATE TABLE IF NOT EXISTS professionals (
   id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   tenant_id BIGINT UNSIGNED NOT NULL,
@@ -82,6 +88,7 @@ CREATE TABLE IF NOT EXISTS referral_rewards (
   INDEX idx_referral_referrer_status (referrer_professional_id,status)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- Vínculo do aluno com seu profissional e dados-base de prontuário.
 CREATE TABLE IF NOT EXISTS students (
   id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   tenant_id BIGINT UNSIGNED NOT NULL,
@@ -104,6 +111,7 @@ CREATE TABLE IF NOT EXISTS students (
   INDEX idx_students_tenant (tenant_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- Histórico local de planos e referências da cobrança externa.
 CREATE TABLE IF NOT EXISTS professional_subscriptions (
   id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   tenant_id BIGINT UNSIGNED NOT NULL,
@@ -132,6 +140,7 @@ CREATE TABLE IF NOT EXISTS asaas_webhook_events (
   created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- Registros de medidas utilizados na evolução do aluno.
 CREATE TABLE IF NOT EXISTS assessments (
   id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   student_id BIGINT UNSIGNED NOT NULL,
@@ -145,6 +154,7 @@ CREATE TABLE IF NOT EXISTS assessments (
   INDEX idx_assessment_student_date (student_id, assessed_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- Respostas de saúde e rotina que ajudam a montar o atendimento.
 CREATE TABLE IF NOT EXISTS student_anamneses (
   id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   student_id BIGINT UNSIGNED NOT NULL,

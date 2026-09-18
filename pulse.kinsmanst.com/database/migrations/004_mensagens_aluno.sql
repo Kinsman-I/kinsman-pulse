@@ -1,3 +1,4 @@
+-- V4: cria mensagens privadas entre aluno e profissional.
 SET NAMES utf8mb4;
 
 CREATE TABLE IF NOT EXISTS student_messages (

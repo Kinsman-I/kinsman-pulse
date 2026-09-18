@@ -1,5 +1,11 @@
 <?php
 declare(strict_types=1);
+
+/**
+ * Único ponto de entrada HTTP da aplicação.
+ * Rotas públicas são resolvidas no início; páginas autenticadas ficam nas
+ * funções page_* abaixo e dependem de current_user()/require_role().
+ */
 require __DIR__ . '/../app/bootstrap.php';
 handle_post();
 $page=(string)($_GET['page']??(current_user()?'dashboard':'home'));
@@ -161,6 +167,9 @@ render(page_title($page),function()use($page,$u){
   }
 },false);
 
+// -----------------------------------------------------------------------------
+// Utilitários de apresentação e páginas administrativas/profissionais.
+// -----------------------------------------------------------------------------
 function page_title(string $page):string{return ['dashboard'=>'Visão geral','users'=>'Profissionais','students'=>'Alunos','student'=>'Prontuário do aluno','muscle-map'=>'Mapa muscular','exercises'=>'Catálogo de exercícios','branding'=>'Marca e configurações','workout'=>'Montar ficha de treino','food-plan'=>'Atualizar dieta','my-anamnesis'=>'Minha anamnese','my-plan'=>'Meu plano alimentar','my-workouts'=>'Meus treinos','my-progress'=>'Minha evolução','messages'=>'Mensagens','session'=>'Treino em andamento','finance'=>'Financeiro','account'=>'Minha conta'][$page]??'Página não encontrada';}
 function role_label(string $role):string{return ['admin'=>'Administrador','professional'=>'Profissional','student'=>'Aluno'][$role]??$role;}
 function initials(string $name):string{$p=preg_split('/\s+/',trim($name));return mb_strtoupper(mb_substr($p[0]??'',0,1).mb_substr(end($p)?:'',0,1));}
@@ -340,6 +349,9 @@ function page_food_plan(array $u):void
   <a class="back" href="<?=url('student',['id'=>$p['student_id'],'tab'=>'food'])?>">← Voltar aos planos</a><section class="editor-head"><div><p class="eyebrow">EDIÇÃO DENTRO DO PRONTUÁRIO</p><h2><?=e($p['title'])?> — versão <?=$p['version']?></h2><p><?=e($p['general_guidance'])?></p></div><form method="post"><?=csrf_field()?><input type="hidden" name="action" value="publish_food_plan"><input type="hidden" name="id" value="<?=$id?>"><button class="primary">Publicar para o aluno</button></form></section><div class="two-col wide-main"><section class="panel"><h2>Refeições do plano</h2><div class="meal-list"><?php if(!$meals):?><div class="empty">Adicione a primeira refeição.</div><?php endif;foreach($meals as $m):?><article><b><?=e(substr((string)$m['meal_time'],0,5))?></b><div><h3><?=e($m['name'])?></h3><p><?=nl2br(e($m['foods']))?></p><?php if($m['substitutions']):?><small>Substituições: <?=e($m['substitutions'])?></small><?php endif;?><details class="row-editor"><summary>Editar refeição</summary><form method="post" class="stack compact"><?=csrf_field()?><input type="hidden" name="action" value="save_meal"><input type="hidden" name="food_plan_id" value="<?=$id?>"><input type="hidden" name="meal_id" value="<?=$m['id']?>"><label>Horário<input type="time" name="meal_time" value="<?=e(substr((string)$m['meal_time'],0,5))?>"></label><label>Nome<input required name="name" value="<?=e($m['name'])?>"></label><label>Alimentos<textarea required name="foods"><?=e($m['foods'])?></textarea></label><label>Substituições<textarea name="substitutions"><?=e($m['substitutions'])?></textarea></label><div class="actions"><button class="secondary">Salvar alteração</button></form><form method="post" onsubmit="return confirm('Excluir esta refeição?')"><?=csrf_field()?><input type="hidden" name="action" value="delete_meal"><input type="hidden" name="food_plan_id" value="<?=$id?>"><input type="hidden" name="meal_id" value="<?=$m['id']?>"><button class="danger">Excluir</button></form></div></details></div></article><?php endforeach;?></div></section><section class="panel sticky"><h2>Adicionar refeição</h2><form method="post" class="stack compact"><?=csrf_field()?><input type="hidden" name="action" value="save_meal"><input type="hidden" name="food_plan_id" value="<?=$id?>"><div class="fields-2"><label>Horário<input type="time" name="meal_time"></label><label>Refeição<input required name="name"></label></div><label>Alimentos e quantidades<textarea required rows="5" name="foods"></textarea></label><label>Substituições<textarea rows="4" name="substitutions"></textarea></label><input type="hidden" name="sort_order" value="<?=count($meals)+1?>"><button class="primary">Adicionar refeição</button></form></section></div><?php }
 
 function student_for_user(array $u):array{$stmt=db()->prepare('SELECT s.*,pu.name professional_name FROM students s JOIN professionals p ON p.id=s.professional_id JOIN users pu ON pu.id=p.user_id WHERE s.user_id=?');$stmt->execute([$u['id']]);$s=$stmt->fetch();if(!$s)exit('Perfil de aluno não encontrado.');return $s;}
+// -----------------------------------------------------------------------------
+// Páginas exclusivas do aluno autenticado.
+// -----------------------------------------------------------------------------
 function page_my_anamnesis(array $u):void
 {
   require_role('student');$s=student_for_user($u);if(!db_table_exists('student_anamneses')){?><div class="notice"><b>Atualização da anamnese pendente.</b><p>Importe o arquivo <code>database/migrations/006_anamnese_e_inicio_do_treino.sql</code> no banco de dados.</p></div><?php return;}$stmt=db()->prepare('SELECT * FROM student_anamneses WHERE student_id=?');$stmt->execute([$s['id']]);$a=$stmt->fetch()?:[];$age=$s['birth_date']?(new DateTime($s['birth_date']))->diff(new DateTime('today'))->y:null;
