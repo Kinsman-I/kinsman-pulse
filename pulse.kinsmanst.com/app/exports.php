@@ -1,6 +1,12 @@
 <?php
 declare(strict_types=1);
 
+/**
+ * Exportações de treino e dieta.
+ * A autorização é sempre conferida antes de montar o HTML destinado à
+ * impressão/PDF; mantenha as consultas de propriedade próximas do início.
+ */
+
 function render_workout_export_picker(array $u): void
 {
     $q=db()->prepare("SELECT d.id,d.name,d.objective FROM workout_sheets d JOIN students s ON s.id=d.student_id WHERE s.user_id=? AND s.tenant_id=? AND d.status='published' ORDER BY d.name,d.id");
