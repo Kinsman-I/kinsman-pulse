@@ -1,6 +1,6 @@
 ---
 deployment:
   tasks:
-    - export DEPLOYPATH=/home4/israe196/pulse.kinsmanst.com/
-    - /bin/cp -R pulse.kinsmanst.com/app "${DEPLOYPATH}"
-    - /bin/cp -R pulse.kinsmanst.com/public_html "${DEPLOYPATH}"
+    # O subdomínio Pulse já aponta para esta cópia do repositório.
+    # O git pull atualiza os arquivos publicados; esta tarefa só confirma o deploy.
+    - /bin/true
