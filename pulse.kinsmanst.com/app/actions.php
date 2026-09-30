@@ -105,7 +105,7 @@ function action_register_professional(): never
     $phone=trim((string)($_POST['phone']??''));
     $password=(string)($_POST['password']??'');
     $confirmation=(string)($_POST['password_confirmation']??'');
-    $service=(string)($_POST['service_type']??'');
+    $service='complete';
     $plan=(string)($_POST['plan']??'basic');
     $billingStart=(string)($_POST['billing_start']??'trial');
     if($name===''||!filter_var($email,FILTER_VALIDATE_EMAIL)) throw new RuntimeException('Informe nome e e-mail válidos.');
@@ -355,8 +355,8 @@ function action_create_professional(): never
     $u=require_role('admin'); $email=strtolower(trim((string)$_POST['email'])); $password=(string)$_POST['password']; if(strlen($password)<8) throw new RuntimeException('Senha muito curta.');
     db()->beginTransaction(); db()->prepare('INSERT INTO users(tenant_id,role,name,email,password_hash,phone) VALUES(?,?,?,?,?,?)')->execute([$u['tenant_id'],'professional',$_POST['name'],$email,password_hash($password,PASSWORD_DEFAULT),$_POST['phone']?:null]); $uid=(int)db()->lastInsertId();
     $referralCode='KIN'.strtoupper(bin2hex(random_bytes(4)));
-    db()->prepare("INSERT INTO professionals(tenant_id,user_id,service_type,registration_number,specialty,subscription_plan,subscription_status,trial_ends_at,referral_code) VALUES(?,?,?,?,?,'basic','cancelled',NULL,?)")->execute([$u['tenant_id'],$uid,$_POST['service_type'],$_POST['registration_number']?:null,$_POST['specialty']?:null,$referralCode]);$pid=(int)db()->lastInsertId();
-    db()->prepare("INSERT INTO professional_subscriptions(tenant_id,professional_id,plan_code,price_cents,status,ends_at) VALUES(?,?,'basic',?,'cancelled',NOW())")->execute([$u['tenant_id'],$pid,subscription_price('basic',(string)$_POST['service_type'])]);
+    db()->prepare("INSERT INTO professionals(tenant_id,user_id,service_type,registration_number,specialty,subscription_plan,subscription_status,trial_ends_at,referral_code) VALUES(?,?,?,?,?,'basic','cancelled',NULL,?)")->execute([$u['tenant_id'],$uid,'complete',$_POST['registration_number']?:null,$_POST['specialty']?:null,$referralCode]);$pid=(int)db()->lastInsertId();
+    db()->prepare("INSERT INTO professional_subscriptions(tenant_id,professional_id,plan_code,price_cents,status,ends_at) VALUES(?,?,'basic',?,'cancelled',NOW())")->execute([$u['tenant_id'],$pid,subscription_price('basic','complete')]);
     db()->commit(); audit('professional.created','user',$uid); flash('success','Profissional cadastrado. A conta será liberada após a ativação do plano.'); redirect(url('users'));
 }
 
@@ -367,15 +367,14 @@ function subscription_limit(string $plan): ?int
 
 function subscription_price(string $plan,string $serviceType='complete'): int
 {
-    if($serviceType!=='complete')return match($plan){'basic'=>5990,'plus'=>9990,'premium'=>16990,default=>5990};
-    return match($plan){'basic'=>8990,'plus'=>12900,'premium'=>21900,default=>8990};
+    return match($plan){'basic'=>3990,'plus'=>7990,'premium'=>12990,default=>3990};
 }
 
 function create_asaas_checkout_for_professional(array $user,int $professionalId,string $plan): string
 {
     if(!in_array($plan,['basic','plus','premium'],true))throw new RuntimeException('Plano inválido.');
     $q=db()->prepare('SELECT service_type FROM professionals WHERE id=?');$q->execute([$professionalId]);$service=(string)$q->fetchColumn();if($service==='')throw new RuntimeException('Profissional inválido.');$price=subscription_price($plan,$service);$reference='pulse-prof-'.$professionalId.'-'.$plan.'-'.bin2hex(random_bytes(6));$appUrl=rtrim((string)env('APP_URL'),'/');
-    $payload=['billingTypes'=>['CREDIT_CARD'],'chargeTypes'=>['RECURRENT'],'minutesToExpire'=>60,'externalReference'=>$reference,'callback'=>['successUrl'=>$appUrl.'/index.php?page=finance&checkout=success','cancelUrl'=>$appUrl.'/index.php?page=finance&checkout=cancel','expiredUrl'=>$appUrl.'/index.php?page=finance&checkout=expired'],'items'=>[['name'=>'Kinsman Pulse '.ucfirst($plan),'description'=>'Assinatura mensal · '.($service==='complete'?'Personal + Nutrição':($service==='nutrition'?'Nutrição':'Personal')),'quantity'=>1,'value'=>$price/100]],'subscription'=>['cycle'=>'MONTHLY','nextDueDate'=>date('Y-m-d H:i:s',time()+300)]];
+    $payload=['billingTypes'=>['CREDIT_CARD'],'chargeTypes'=>['RECURRENT'],'minutesToExpire'=>60,'externalReference'=>$reference,'callback'=>['successUrl'=>$appUrl.'/index.php?page=finance&checkout=success','cancelUrl'=>$appUrl.'/index.php?page=finance&checkout=cancel','expiredUrl'=>$appUrl.'/index.php?page=finance&checkout=expired'],'items'=>[['name'=>'Kinsman Pulse '.ucfirst($plan),'description'=>'Assinatura mensal · Personal + Nutrição','quantity'=>1,'value'=>$price/100]],'subscription'=>['cycle'=>'MONTHLY','nextDueDate'=>date('Y-m-d H:i:s',time()+300)]];
     $checkout=asaas_request('POST','/checkouts',$payload);$checkoutId=(string)($checkout['id']??'');if($checkoutId==='')throw new RuntimeException('A Asaas não retornou o checkout.');
     db()->prepare("UPDATE professional_subscriptions SET status='cancelled',ends_at=NOW() WHERE professional_id=? AND status='trial'")->execute([$professionalId]);
     db()->prepare('INSERT INTO professional_subscriptions(tenant_id,professional_id,plan_code,price_cents,status,asaas_checkout_id,external_reference) VALUES(?,?,?,?,\'cancelled\',?,?)')->execute([$user['tenant_id'],$professionalId,$plan,$price,$checkoutId,$reference]);
