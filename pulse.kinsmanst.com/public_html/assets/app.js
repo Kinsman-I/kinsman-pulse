@@ -275,32 +275,23 @@ document.addEventListener("DOMContentLoaded", () => {
   const guides = {
     admin: {
       audience: "ADMINISTRAÇÃO DA PLATAFORMA",
-      title: "Você está no controle do Pulse.",
+      title: "Entenda o Pulse em segundos.",
       steps: [
-        ["Visão geral", "Acompanhe os indicadores principais e use os atalhos para a gestão da plataforma."],
-        ["Profissionais", "Cadastre profissionais, defina limites de alunos e acompanhe a situação de cada assinatura."],
-        ["Banco de exercícios", "Organize o catálogo global sem acessar prontuários ou conteúdos clínicos dos alunos."],
-        ["Financeiro", "Consulte planos, pagamentos e informações operacionais em um único lugar."],
+        ["Comece pelos profissionais", "Cadastre profissionais, acompanhe planos e financeiro e mantenha o catálogo de exercícios organizado."],
       ],
     },
     professional: {
       audience: "PRIMEIROS PASSOS DO PROFISSIONAL",
-      title: "Vamos organizar seu atendimento.",
+      title: "Seu atendimento em um só fluxo.",
       steps: [
-        ["Cadastre seus alunos", "Em Meus alunos, adicione cada pessoa e centralize os dados do acompanhamento."],
-        ["Conheça a anamnese", "Abra o prontuário do aluno para revisar objetivos, rotina e as informações preenchidas."],
-        ["Publique orientações", "Prepare treino e plano alimentar, revise tudo e publique somente quando estiver pronto."],
-        ["Personalize sua marca", "Em Minha marca, configure nome, cor, logo e seus canais de atendimento."],
+        ["1. Cadastre um aluno", "Depois abra o prontuário, revise a anamnese e publique treino ou plano alimentar. A evolução fica centralizada na ficha."],
       ],
     },
     student: {
       audience: "BEM-VINDO(A) AO PULSE",
       title: "Seu acompanhamento começa aqui.",
       steps: [
-        ["Complete sua anamnese", "Conte seus objetivos e sua rotina. Isso ajuda o profissional a preparar suas orientações."],
-        ["Consulte o que foi publicado", "Em Meu plano e Meus treinos, veja apenas os conteúdos liberados pelo seu profissional."],
-        ["Registre sua evolução", "Atualize peso e medidas quando solicitado para acompanhar seu progresso ao longo do tempo."],
-        ["Fale com o profissional", "Use Mensagens sempre que tiver dúvida sobre seu acompanhamento."],
+        ["1. Complete sua anamnese", "Em seguida, consulte os treinos e planos publicados, registre sua evolução e use Mensagens para falar com o profissional."],
       ],
     },
   };
@@ -329,7 +320,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const back = modal.querySelector("[data-guide-back]");
     const next = modal.querySelector("[data-guide-next]");
     back.hidden = currentStep === 0;
-    next.textContent = currentStep === guide.steps.length - 1 ? "Concluir guia" : "Próximo";
+    next.textContent = currentStep === guide.steps.length - 1 ? "Começar agora" : "Próximo";
   };
 
   const closeGuide = (remember = true) => {
@@ -359,7 +350,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const eyebrow = element("p", "pulse-guide__eyebrow", guide.audience);
     const title = element("h2", "", guide.title);
     title.id = "pulse-guide-title";
-    const description = element("p", "pulse-guide__description", "Este guia rápido mostra onde encontrar o essencial. Você poderá revê-lo quando quiser.");
+    const description = element("p", "pulse-guide__description", "Veja o essencial em poucos segundos. Você poderá rever esta dica quando quiser.");
     const dots = element("div", "pulse-guide__steps");
     dots.setAttribute("aria-hidden", "true");
     guide.steps.forEach(() => {

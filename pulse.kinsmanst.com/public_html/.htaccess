@@ -1,6 +1,26 @@
 Options -Indexes +FollowSymLinks
 DirectoryIndex index.php
 
+# Recursos estáticos têm nomes/versionamento próprios. O cache reduz o tempo
+# de abertura nas próximas visitas sem atrasar atualizações do aplicativo.
+<IfModule mod_expires.c>
+    ExpiresActive On
+    ExpiresByType text/css "access plus 7 days"
+    ExpiresByType application/javascript "access plus 7 days"
+    ExpiresByType text/javascript "access plus 7 days"
+    ExpiresByType image/png "access plus 30 days"
+    ExpiresByType image/jpeg "access plus 30 days"
+    ExpiresByType image/webp "access plus 30 days"
+    ExpiresByType image/svg+xml "access plus 30 days"
+    ExpiresByType image/x-icon "access plus 30 days"
+</IfModule>
+
+<IfModule mod_headers.c>
+    <FilesMatch "\.(css|js|png|jpe?g|webp|svg|ico)$">
+        Header always set Cache-Control "public, max-age=604800, immutable"
+    </FilesMatch>
+</IfModule>
+
 # ---------- Arquivos sensíveis ----------
 <FilesMatch "^(\.env|\.git|error_log|composer\.(json|lock)|package(-lock)?\.json|\.(sql|zip|tar|gz|bak|log|ini|sh))$">
     Require all denied
