@@ -256,7 +256,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   const style = document.createElement("link");
   style.rel = "stylesheet";
-  style.href = "assets/onboarding.css?v=1";
+  style.href = "assets/onboarding.css?v=2";
   style.dataset.pulseOnboarding = "true";
   document.head.append(style);
 
@@ -275,23 +275,30 @@ document.addEventListener("DOMContentLoaded", () => {
   const guides = {
     admin: {
       audience: "ADMINISTRAÇÃO DA PLATAFORMA",
-      title: "Entenda o Pulse em segundos.",
+      title: "A operação da plataforma, em ordem.",
       steps: [
-        ["Comece pelos profissionais", "Cadastre profissionais, acompanhe planos e financeiro e mantenha o catálogo de exercícios organizado."],
+        ["Cadastre os profissionais", "Crie os acessos, acompanhe os limites de alunos e mantenha as assinaturas organizadas.", "Profissionais", "index.php?page=users"],
+        ["Acompanhe o financeiro", "Consulte os planos e a situação das assinaturas em um só lugar.", "Abrir financeiro", "index.php?page=finance"],
+        ["Mantenha o catálogo pronto", "A biblioteca de exercícios fica preparada para os profissionais usarem nas fichas.", "Ver exercícios", "index.php?page=exercises"],
       ],
     },
     professional: {
       audience: "PRIMEIROS PASSOS DO PROFISSIONAL",
-      title: "Seu atendimento em um só fluxo.",
+      title: "Vamos montar seu primeiro atendimento.",
       steps: [
-        ["1. Cadastre um aluno", "Depois abra o prontuário, revise a anamnese e publique treino ou plano alimentar. A evolução fica centralizada na ficha."],
+        ["1. Cadastre o aluno", "Inclua os dados básicos, objetivo, altura e peso. O Pulse já cria o acesso dele.", "Cadastrar aluno", "index.php?page=students"],
+        ["2. Envie e revise a anamnese", "No prontuário, solicite a anamnese e use as respostas para entender a rotina e os objetivos.", "Abrir alunos", "index.php?page=students"],
+        ["3. Monte treino ou plano alimentar", "Pelo prontuário, prepare a ficha de treino ou a dieta e publique somente depois de revisar.", "Ver prontuários", "index.php?page=students"],
+        ["4. Acompanhe e ajuste", "Registre avaliações, confira a evolução e responda as mensagens sem sair do painel.", "Voltar ao painel", "index.php?page=dashboard"],
       ],
     },
     student: {
       audience: "BEM-VINDO(A) AO PULSE",
       title: "Seu acompanhamento começa aqui.",
       steps: [
-        ["1. Complete sua anamnese", "Em seguida, consulte os treinos e planos publicados, registre sua evolução e use Mensagens para falar com o profissional."],
+        ["1. Complete sua anamnese", "Conte ao profissional seus objetivos, rotina e restrições para que ele prepare suas orientações.", "Abrir anamnese", "index.php?page=my-anamnesis"],
+        ["2. Consulte o que foi publicado", "Seu treino e plano alimentar aparecem aqui assim que o profissional fizer a publicação.", "Ver início", "index.php?page=dashboard"],
+        ["3. Registre sua evolução", "Atualize peso e medidas para acompanhar seu progresso junto com o profissional.", "Ver evolução", "index.php?page=my-progress"],
       ],
     },
   };
@@ -310,10 +317,13 @@ document.addEventListener("DOMContentLoaded", () => {
 
   const renderStep = () => {
     if (!modal) return;
-    const [heading, copy] = guide.steps[currentStep];
+    const [heading, copy, actionLabel, actionUrl] = guide.steps[currentStep];
     modal.querySelector("[data-guide-step]").textContent = `Passo ${currentStep + 1} de ${guide.steps.length}`;
     modal.querySelector("[data-guide-heading]").textContent = heading;
     modal.querySelector("[data-guide-copy]").textContent = copy;
+    const action = modal.querySelector("[data-guide-action]");
+    action.textContent = actionLabel;
+    action.href = actionUrl;
     modal.querySelectorAll("[data-guide-dot]").forEach((dot, index) => {
       dot.classList.toggle("is-current", index <= currentStep);
     });
@@ -350,7 +360,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const eyebrow = element("p", "pulse-guide__eyebrow", guide.audience);
     const title = element("h2", "", guide.title);
     title.id = "pulse-guide-title";
-    const description = element("p", "pulse-guide__description", "Veja o essencial em poucos segundos. Você poderá rever esta dica quando quiser.");
+    const description = element("p", "pulse-guide__description", "Siga cada etapa no seu ritmo. Este guia fica disponível no botão Ajuda.");
     const dots = element("div", "pulse-guide__steps");
     dots.setAttribute("aria-hidden", "true");
     guide.steps.forEach(() => {
@@ -364,6 +374,8 @@ document.addEventListener("DOMContentLoaded", () => {
     stepTitle.dataset.guideHeading = "true";
     const stepCopy = element("p", "pulse-guide__text");
     stepCopy.dataset.guideCopy = "true";
+    const stepAction = element("a", "pulse-guide__action");
+    stepAction.dataset.guideAction = "true";
     const actions = element("div", "pulse-guide__actions");
     const skip = element("button", "pulse-guide__secondary", "Pular por enquanto");
     skip.type = "button";
@@ -376,7 +388,7 @@ document.addEventListener("DOMContentLoaded", () => {
     next.dataset.guideNext = "true";
     actionSet.append(back, next);
     actions.append(skip, actionSet);
-    dialog.append(eyebrow, title, description, dots, count, stepTitle, stepCopy, actions);
+    dialog.append(eyebrow, title, description, dots, count, stepTitle, stepCopy, stepAction, actions);
     modal.append(dialog);
     document.body.append(modal);
 
@@ -405,10 +417,51 @@ document.addEventListener("DOMContentLoaded", () => {
   trigger.setAttribute("aria-label", "Abrir guia de primeiros passos");
   trigger.addEventListener("click", openGuide);
   document.querySelector(".top-actions")?.prepend(trigger);
+  document.querySelectorAll("[data-open-guide]").forEach((button) => {
+    button.addEventListener("click", openGuide);
+  });
 
   document.addEventListener("keydown", (event) => {
     if (event.key === "Escape" && modal && !modal.hidden) closeGuide();
   });
 
   if (!localStorage.getItem(storageKey)) window.setTimeout(openGuide, 450);
+});
+
+/* Calculadora local de IMC: não grava dados e funciona para aluno e profissional. */
+document.addEventListener("DOMContentLoaded", () => {
+  if (!document.body.classList.contains("app-body")) return;
+
+  const role = document.querySelector(".sidebar-foot span")?.textContent?.trim().toLowerCase() || "";
+  const dashboard = new URLSearchParams(window.location.search).get("page") || "dashboard";
+
+  if (dashboard === "dashboard" && role.includes("profissional") && !document.querySelector("[data-bmi-calculator]")) {
+    const calculator = document.createElement("section");
+    calculator.className = "panel bmi-calculator";
+    calculator.dataset.bmiCalculator = "true";
+    calculator.innerHTML = '<div><p class="eyebrow">FERRAMENTA RÁPIDA</p><h2>Calculadora de IMC</h2><p>Use durante a avaliação do aluno. O resultado é informativo e não substitui avaliação profissional.</p></div><div class="bmi-calculator__fields"><label>Altura (m)<input data-bmi-height type="number" min="0.50" max="2.80" step=".01" placeholder="Ex.: 1,75"></label><label>Peso (kg)<input data-bmi-weight type="number" min="1" max="500" step=".1" placeholder="Ex.: 75"></label><output data-bmi-result>Informe altura e peso</output></div>';
+    document.querySelector(".operational-hub")?.after(calculator);
+  }
+
+  document.querySelectorAll("[data-bmi-calculator]").forEach((calculator) => {
+    const height = calculator.querySelector("[data-bmi-height]");
+    const weight = calculator.querySelector("[data-bmi-weight]");
+    const result = calculator.querySelector("[data-bmi-result]");
+    if (!height || !weight || !result) return;
+
+    const classify = (value) => value < 18.5 ? "Abaixo do peso" : value < 25 ? "Faixa adequada" : value < 30 ? "Sobrepeso" : "Obesidade";
+    const calculate = () => {
+      const h = Number(String(height.value).replace(",", "."));
+      const w = Number(String(weight.value).replace(",", "."));
+      if (!h || !w || h < .5 || h > 2.8 || w < 1 || w > 500) {
+        result.textContent = "Informe altura e peso";
+        return;
+      }
+      const value = w / (h * h);
+      result.textContent = `IMC ${value.toFixed(1).replace(".", ",")} · ${classify(value)}`;
+    };
+    height.addEventListener("input", calculate);
+    weight.addEventListener("input", calculate);
+    calculate();
+  });
 });
