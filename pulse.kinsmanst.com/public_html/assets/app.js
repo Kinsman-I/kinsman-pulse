@@ -243,3 +243,181 @@ document.addEventListener("DOMContentLoaded", () => {
     };
   }
 });
+
+/*
+ * Guia de primeiro acesso
+ *
+ * O estado fica no navegador do próprio usuário. Assim, cada perfil vê o
+ * guia na primeira entrada, sem exigir mudança de banco ou interferir na
+ * experiência de outras pessoas da mesma conta profissional.
+ */
+document.addEventListener("DOMContentLoaded", () => {
+  if (!document.body.classList.contains("app-body")) return;
+
+  const style = document.createElement("link");
+  style.rel = "stylesheet";
+  style.href = "assets/onboarding.css?v=1";
+  style.dataset.pulseOnboarding = "true";
+  document.head.append(style);
+
+  const userName =
+    document.querySelector(".sidebar-foot strong")?.textContent?.trim() || "user";
+  const roleLabel =
+    document.querySelector(".sidebar-foot span")?.textContent?.trim().toLowerCase() ||
+    "usuário";
+  const role = roleLabel.includes("administrador")
+    ? "admin"
+    : roleLabel.includes("profissional")
+      ? "professional"
+      : "student";
+  const storageKey = `pulse:first-access:v1:${role}:${userName}`;
+
+  const guides = {
+    admin: {
+      audience: "ADMINISTRAÇÃO DA PLATAFORMA",
+      title: "Você está no controle do Pulse.",
+      steps: [
+        ["Visão geral", "Acompanhe os indicadores principais e use os atalhos para a gestão da plataforma."],
+        ["Profissionais", "Cadastre profissionais, defina limites de alunos e acompanhe a situação de cada assinatura."],
+        ["Banco de exercícios", "Organize o catálogo global sem acessar prontuários ou conteúdos clínicos dos alunos."],
+        ["Financeiro", "Consulte planos, pagamentos e informações operacionais em um único lugar."],
+      ],
+    },
+    professional: {
+      audience: "PRIMEIROS PASSOS DO PROFISSIONAL",
+      title: "Vamos organizar seu atendimento.",
+      steps: [
+        ["Cadastre seus alunos", "Em Meus alunos, adicione cada pessoa e centralize os dados do acompanhamento."],
+        ["Conheça a anamnese", "Abra o prontuário do aluno para revisar objetivos, rotina e as informações preenchidas."],
+        ["Publique orientações", "Prepare treino e plano alimentar, revise tudo e publique somente quando estiver pronto."],
+        ["Personalize sua marca", "Em Minha marca, configure nome, cor, logo e seus canais de atendimento."],
+      ],
+    },
+    student: {
+      audience: "BEM-VINDO(A) AO PULSE",
+      title: "Seu acompanhamento começa aqui.",
+      steps: [
+        ["Complete sua anamnese", "Conte seus objetivos e sua rotina. Isso ajuda o profissional a preparar suas orientações."],
+        ["Consulte o que foi publicado", "Em Meu plano e Meus treinos, veja apenas os conteúdos liberados pelo seu profissional."],
+        ["Registre sua evolução", "Atualize peso e medidas quando solicitado para acompanhar seu progresso ao longo do tempo."],
+        ["Fale com o profissional", "Use Mensagens sempre que tiver dúvida sobre seu acompanhamento."],
+      ],
+    },
+  };
+
+  const guide = guides[role];
+  let currentStep = 0;
+  let previousFocus = null;
+  let modal;
+
+  const element = (tag, className, text) => {
+    const node = document.createElement(tag);
+    if (className) node.className = className;
+    if (text) node.textContent = text;
+    return node;
+  };
+
+  const renderStep = () => {
+    if (!modal) return;
+    const [heading, copy] = guide.steps[currentStep];
+    modal.querySelector("[data-guide-step]").textContent = `Passo ${currentStep + 1} de ${guide.steps.length}`;
+    modal.querySelector("[data-guide-heading]").textContent = heading;
+    modal.querySelector("[data-guide-copy]").textContent = copy;
+    modal.querySelectorAll("[data-guide-dot]").forEach((dot, index) => {
+      dot.classList.toggle("is-current", index <= currentStep);
+    });
+    const back = modal.querySelector("[data-guide-back]");
+    const next = modal.querySelector("[data-guide-next]");
+    back.hidden = currentStep === 0;
+    next.textContent = currentStep === guide.steps.length - 1 ? "Concluir guia" : "Próximo";
+  };
+
+  const closeGuide = (remember = true) => {
+    if (!modal) return;
+    if (remember) localStorage.setItem(storageKey, "completed");
+    modal.hidden = true;
+    previousFocus?.focus();
+  };
+
+  const openGuide = () => {
+    if (!modal) return;
+    previousFocus = document.activeElement;
+    currentStep = 0;
+    renderStep();
+    modal.hidden = false;
+    modal.querySelector("[data-guide-next]").focus();
+  };
+
+  const buildGuide = () => {
+    modal = element("section", "pulse-guide");
+    modal.hidden = true;
+    modal.setAttribute("role", "dialog");
+    modal.setAttribute("aria-modal", "true");
+    modal.setAttribute("aria-labelledby", "pulse-guide-title");
+
+    const dialog = element("div", "pulse-guide__dialog");
+    const eyebrow = element("p", "pulse-guide__eyebrow", guide.audience);
+    const title = element("h2", "", guide.title);
+    title.id = "pulse-guide-title";
+    const description = element("p", "pulse-guide__description", "Este guia rápido mostra onde encontrar o essencial. Você poderá revê-lo quando quiser.");
+    const dots = element("div", "pulse-guide__steps");
+    dots.setAttribute("aria-hidden", "true");
+    guide.steps.forEach(() => {
+      const dot = element("i");
+      dot.dataset.guideDot = "true";
+      dots.append(dot);
+    });
+    const count = element("small", "pulse-guide__count");
+    count.dataset.guideStep = "true";
+    const stepTitle = element("h3");
+    stepTitle.dataset.guideHeading = "true";
+    const stepCopy = element("p", "pulse-guide__text");
+    stepCopy.dataset.guideCopy = "true";
+    const actions = element("div", "pulse-guide__actions");
+    const skip = element("button", "pulse-guide__secondary", "Pular por enquanto");
+    skip.type = "button";
+    const actionSet = element("div");
+    const back = element("button", "pulse-guide__secondary", "Voltar");
+    back.type = "button";
+    back.dataset.guideBack = "true";
+    const next = element("button", "pulse-guide__primary", "Próximo");
+    next.type = "button";
+    next.dataset.guideNext = "true";
+    actionSet.append(back, next);
+    actions.append(skip, actionSet);
+    dialog.append(eyebrow, title, description, dots, count, stepTitle, stepCopy, actions);
+    modal.append(dialog);
+    document.body.append(modal);
+
+    skip.addEventListener("click", () => closeGuide());
+    back.addEventListener("click", () => {
+      currentStep = Math.max(0, currentStep - 1);
+      renderStep();
+    });
+    next.addEventListener("click", () => {
+      if (currentStep === guide.steps.length - 1) {
+        closeGuide();
+        return;
+      }
+      currentStep += 1;
+      renderStep();
+    });
+    modal.addEventListener("click", (event) => {
+      if (event.target === modal) closeGuide();
+    });
+  };
+
+  buildGuide();
+
+  const trigger = element("button", "tutorial-trigger", "Primeiros passos");
+  trigger.type = "button";
+  trigger.setAttribute("aria-label", "Abrir guia de primeiros passos");
+  trigger.addEventListener("click", openGuide);
+  document.querySelector(".top-actions")?.prepend(trigger);
+
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && modal && !modal.hidden) closeGuide();
+  });
+
+  if (!localStorage.getItem(storageKey)) window.setTimeout(openGuide, 450);
+});

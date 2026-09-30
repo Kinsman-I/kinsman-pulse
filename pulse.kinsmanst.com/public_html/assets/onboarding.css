@@ -1,0 +1,280 @@
+/*
+ * Complementos transversais de responsividade e primeiro acesso.
+ * Carregado pelo app.js para manter a base visual concentrada em assets.
+ */
+
+/* Evita que conteúdos internos forcem rolagem horizontal em qualquer página. */
+.app-main,
+.content,
+.panel,
+.content-card,
+.page-head,
+.panel-head,
+.page-actions,
+.top-actions {
+  min-width: 0;
+}
+
+.content table {
+  display: block;
+  max-width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.tabs {
+  max-width: 100%;
+  overflow-x: auto;
+  overscroll-behavior-inline: contain;
+  scrollbar-width: thin;
+}
+
+.tabs a {
+  flex: 0 0 auto;
+}
+
+/* Botão discreto para o usuário rever o guia quando quiser. */
+.tutorial-trigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 38px;
+  padding: 0 12px;
+  border: 1px solid var(--line, #d9e5df);
+  border-radius: 9px;
+  background: #fff;
+  color: var(--brand-dark, #123e34);
+  font: inherit;
+  font-size: .78rem;
+  font-weight: 800;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.tutorial-trigger:hover {
+  border-color: var(--brand, #16765f);
+  background: var(--brand-soft, #edf5f2);
+}
+
+.pulse-guide[hidden] {
+  display: none;
+}
+
+.pulse-guide {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgba(5, 28, 22, .58);
+}
+
+.pulse-guide__dialog {
+  width: min(100%, 610px);
+  max-height: min(720px, calc(100dvh - 48px));
+  overflow: auto;
+  padding: clamp(24px, 4vw, 38px);
+  border: 1px solid rgba(255, 255, 255, .6);
+  border-radius: 22px;
+  background: #fff;
+  color: var(--ink, #173a34);
+  box-shadow: 0 28px 80px rgba(3, 29, 22, .36);
+}
+
+.pulse-guide__eyebrow {
+  margin: 0 0 8px;
+  color: var(--brand, #16765f);
+  font-size: .72rem;
+  font-weight: 900;
+  letter-spacing: .1em;
+}
+
+.pulse-guide h2 {
+  margin: 0;
+  color: var(--brand-dark, #123e34);
+  font-size: clamp(1.55rem, 4vw, 2.1rem);
+  line-height: 1.16;
+}
+
+.pulse-guide__description {
+  margin: 12px 0 0;
+  color: var(--muted, #61766f);
+  font-size: 1rem;
+  line-height: 1.6;
+}
+
+.pulse-guide__steps {
+  display: flex;
+  gap: 7px;
+  margin: 28px 0 18px;
+}
+
+.pulse-guide__steps i {
+  display: block;
+  width: 100%;
+  height: 5px;
+  border-radius: 999px;
+  background: #dbe7e1;
+}
+
+.pulse-guide__steps i.is-current {
+  background: var(--brand, #16765f);
+}
+
+.pulse-guide__count {
+  display: block;
+  margin-bottom: 8px;
+  color: var(--muted, #61766f);
+  font-size: .78rem;
+  font-weight: 800;
+}
+
+.pulse-guide h3 {
+  margin: 0;
+  color: var(--brand-dark, #123e34);
+  font-size: 1.2rem;
+}
+
+.pulse-guide__text {
+  margin: 8px 0 0;
+  color: var(--muted, #61766f);
+  line-height: 1.58;
+}
+
+.pulse-guide__actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 30px;
+}
+
+.pulse-guide__actions > div {
+  display: flex;
+  gap: 9px;
+}
+
+.pulse-guide button {
+  min-height: 44px;
+  padding: 0 16px;
+  border: 0;
+  border-radius: 10px;
+  font: inherit;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.pulse-guide__secondary {
+  background: #edf4f1;
+  color: var(--brand-dark, #123e34);
+}
+
+.pulse-guide__primary {
+  background: var(--brand, #16765f);
+  color: #fff;
+}
+
+@media (min-width: 901px) {
+  .content {
+    width: min(calc(100% - 56px), 1380px);
+  }
+}
+
+@media (max-width: 900px) {
+  .topbar {
+    position: sticky;
+    top: 0;
+    z-index: 40;
+  }
+
+  .page-head,
+  .panel-head {
+    flex-wrap: wrap;
+  }
+
+  .page-actions {
+    width: 100%;
+  }
+}
+
+@media (max-width: 640px) {
+  .topbar {
+    min-height: 70px;
+    padding-inline: 14px;
+    gap: 10px;
+  }
+
+  .top-actions {
+    margin-left: auto;
+    gap: 8px;
+  }
+
+  .top-actions .button.ghost {
+    min-height: 38px;
+    padding-inline: 11px;
+  }
+
+  .content {
+    width: calc(100% - 24px);
+    padding-top: 20px;
+    padding-bottom: 28px;
+  }
+
+  .page-head,
+  .panel-head {
+    gap: 14px;
+  }
+
+  .page-actions > .button,
+  .page-actions > button,
+  .panel-head + .button {
+    width: 100%;
+  }
+
+  .panel,
+  .content-card {
+    max-width: 100%;
+  }
+
+  .tutorial-trigger {
+    padding-inline: 9px;
+    font-size: .72rem;
+  }
+
+  .pulse-guide {
+    align-items: end;
+    padding: 12px;
+  }
+
+  .pulse-guide__dialog {
+    max-height: calc(100dvh - 24px);
+    padding: 24px 20px;
+    border-radius: 18px;
+  }
+
+  .pulse-guide__actions,
+  .pulse-guide__actions > div {
+    align-items: stretch;
+    flex-direction: column-reverse;
+  }
+
+  .pulse-guide__actions {
+    margin-top: 24px;
+  }
+
+  .pulse-guide__actions > div,
+  .pulse-guide button {
+    width: 100%;
+  }
+}
+
+@media (max-width: 390px) {
+  .top-actions .avatar {
+    display: none;
+  }
+
+  .top-actions .button.ghost {
+    font-size: .8rem;
+  }
+}
