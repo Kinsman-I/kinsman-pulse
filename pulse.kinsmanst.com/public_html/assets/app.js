@@ -435,6 +435,8 @@ document.addEventListener("DOMContentLoaded", () => {
   const role = document.querySelector(".sidebar-foot span")?.textContent?.trim().toLowerCase() || "";
   const dashboard = new URLSearchParams(window.location.search).get("page") || "dashboard";
 
+  if (dashboard === "dashboard") document.body.classList.add("dashboard-view");
+
   if (dashboard === "dashboard" && role.includes("profissional") && !document.querySelector("[data-bmi-calculator]")) {
     const calculator = document.createElement("section");
     calculator.className = "panel bmi-calculator";
