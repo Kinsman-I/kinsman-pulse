@@ -180,6 +180,10 @@ if($u['role']==='admin' && $page==='branding'){
   flash('error','A identidade visual é configurada individualmente por cada profissional.');
   redirect(url('dashboard'));
 }
+if($u['role']==='professional'&&$page==='branding'&&!in_array((string)($u['subscription_plan']??'basic'),['plus','premium'],true)){
+  flash('error','A personalização de logo e marca está disponível nos planos Plus e Premium.');
+  redirect(url('finance'));
+}
 if($u['role']==='student' && $page==='finance'){
   flash('error','A área financeira é exclusiva do profissional e do administrador.');
   redirect(url('dashboard'));

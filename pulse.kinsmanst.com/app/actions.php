@@ -224,9 +224,9 @@ function action_forgot(): never
 function password_reset_brand(int $userId): array
 {
     $stmt=db()->prepare("SELECT
-      COALESCE(ownp.brand_name, studentp.brand_name, t.name, 'Kinsman Pulse') brand_name,
-      COALESCE(ownp.logo_path, studentp.logo_path, t.logo_path) logo_path,
-      COALESCE(ownp.primary_color, studentp.primary_color, t.primary_color, '#16765f') primary_color
+      CASE WHEN ownp.subscription_plan IN ('plus','premium') THEN COALESCE(ownp.brand_name,t.name) WHEN studentp.subscription_plan IN ('plus','premium') THEN COALESCE(studentp.brand_name,t.name) ELSE COALESCE(t.name,'Kinsman Pulse') END brand_name,
+      CASE WHEN ownp.subscription_plan IN ('plus','premium') THEN COALESCE(ownp.logo_path,t.logo_path) WHEN studentp.subscription_plan IN ('plus','premium') THEN COALESCE(studentp.logo_path,t.logo_path) ELSE t.logo_path END logo_path,
+      CASE WHEN ownp.subscription_plan IN ('plus','premium') THEN COALESCE(ownp.primary_color,t.primary_color,'#16765f') WHEN studentp.subscription_plan IN ('plus','premium') THEN COALESCE(studentp.primary_color,t.primary_color,'#16765f') ELSE COALESCE(t.primary_color,'#16765f') END primary_color
       FROM users u
       JOIN tenants t ON t.id=u.tenant_id
       LEFT JOIN professionals ownp ON ownp.user_id=u.id
@@ -353,7 +353,9 @@ function height_to_cm(mixed $value): ?float
 
 function action_save_brand(): never
 {
-    $u=require_role(['admin','professional']); $logo=upload_image('logo','logos'); $color=(string)($_POST['primary_color']??'#16765f'); if(!preg_match('/^#[0-9a-fA-F]{6}$/',$color)) throw new RuntimeException('Cor invalida.');
+    $u=require_role(['admin','professional']);
+    if($u['role']==='professional'){$plan=(string)($u['subscription_plan']??'basic');if(!in_array($plan,['plus','premium'],true))throw new RuntimeException('A personalização de logo e marca está disponível nos planos Plus e Premium.');}
+    $logo=upload_image('logo','logos'); $color=(string)($_POST['primary_color']??'#16765f'); if(!preg_match('/^#[0-9a-fA-F]{6}$/',$color)) throw new RuntimeException('Cor invalida.');
     if($u['role']==='admin') { $sql='UPDATE tenants SET name=?,primary_color=?'.($logo?',logo_path=?':'').' WHERE id=?'; $args=[$_POST['name'],$color]; if($logo)$args[]=$logo; $args[]=$u['tenant_id']; }
     else { $sql='UPDATE professionals SET brand_name=?,primary_color=?,whatsapp=?,instagram=?,welcome_message=?,footer_text=?'.($logo?',logo_path=?':'').' WHERE user_id=? AND tenant_id=?'; $args=[$_POST['name'],$color,$_POST['whatsapp']?:null,$_POST['instagram']?:null,$_POST['welcome_message']?:null,$_POST['footer_text']?:null]; if($logo)$args[]=$logo; $args[]=$u['id']; $args[]=$u['tenant_id']; }
     db()->prepare($sql)->execute($args); audit('brand.updated','tenant',(int)$u['tenant_id']); flash('success','Identidade visual atualizada.'); redirect(url('branding'));

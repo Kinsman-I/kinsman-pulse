@@ -993,6 +993,16 @@
   font-weight: 900;
 }
 
+.pl-plan-features li.is-unavailable {
+  color: #8a9892;
+}
+
+.pl-plan-features li.is-unavailable::before {
+  background: #edf0ee;
+  color: #7d8b85;
+  content: "—";
+}
+
 .pl-pricing .pl-button {
   margin-top: auto;
   padding: 14px;

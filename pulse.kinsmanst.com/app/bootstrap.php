@@ -81,27 +81,28 @@ function current_user(): ?array
     if ($user !== null) return $user ?: null;
     $stmt = db()->prepare("SELECT u.*,
       CASE
-        WHEN u.role='professional' THEN COALESCE(NULLIF(ownp.brand_name, ''), 'Minha marca')
-        WHEN u.role='student' THEN COALESCE(NULLIF(studentp.brand_name, ''), t.name)
+        WHEN u.role='professional' AND ownp.subscription_plan IN ('plus','premium') THEN COALESCE(NULLIF(ownp.brand_name, ''), t.name)
+        WHEN u.role='student' AND studentp.subscription_plan IN ('plus','premium') THEN COALESCE(NULLIF(studentp.brand_name, ''), t.name)
         ELSE t.name
       END tenant_name,
       CASE
-        WHEN u.role='professional' THEN ownp.logo_path
-        WHEN u.role='student' THEN studentp.logo_path
+        WHEN u.role='professional' AND ownp.subscription_plan IN ('plus','premium') THEN ownp.logo_path
+        WHEN u.role='student' AND studentp.subscription_plan IN ('plus','premium') THEN studentp.logo_path
         ELSE t.logo_path
       END logo_path,
       CASE
-        WHEN u.role='professional' THEN COALESCE(ownp.primary_color, '#16765f')
-        WHEN u.role='student' THEN COALESCE(studentp.primary_color, t.primary_color, '#16765f')
+        WHEN u.role='professional' AND ownp.subscription_plan IN ('plus','premium') THEN COALESCE(ownp.primary_color, t.primary_color, '#16765f')
+        WHEN u.role='student' AND studentp.subscription_plan IN ('plus','premium') THEN COALESCE(studentp.primary_color, t.primary_color, '#16765f')
         ELSE COALESCE(t.primary_color, '#16765f')
       END primary_color,
       ownp.brand_name own_brand_name,
-      COALESCE(ownp.whatsapp, studentp.whatsapp) brand_whatsapp,
-      COALESCE(ownp.instagram, studentp.instagram) brand_instagram,
-      COALESCE(ownp.welcome_message, studentp.welcome_message) welcome_message,
+      ownp.subscription_plan subscription_plan,
+      CASE WHEN ownp.subscription_plan IN ('plus','premium') THEN ownp.whatsapp WHEN studentp.subscription_plan IN ('plus','premium') THEN studentp.whatsapp ELSE NULL END brand_whatsapp,
+      CASE WHEN ownp.subscription_plan IN ('plus','premium') THEN ownp.instagram WHEN studentp.subscription_plan IN ('plus','premium') THEN studentp.instagram ELSE NULL END brand_instagram,
+      CASE WHEN ownp.subscription_plan IN ('plus','premium') THEN ownp.welcome_message WHEN studentp.subscription_plan IN ('plus','premium') THEN studentp.welcome_message ELSE NULL END welcome_message,
       CASE
-        WHEN u.role='professional' THEN ownp.footer_text
-        WHEN u.role='student' THEN COALESCE(studentp.footer_text, 'Tecnologia Kinsman')
+        WHEN u.role='professional' AND ownp.subscription_plan IN ('plus','premium') THEN ownp.footer_text
+        WHEN u.role='student' AND studentp.subscription_plan IN ('plus','premium') THEN COALESCE(studentp.footer_text, 'Tecnologia Kinsman')
         ELSE COALESCE(t.name, 'Tecnologia Kinsman')
       END footer_text
       ,'personal' access_service_type

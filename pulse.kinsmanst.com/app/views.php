@@ -5,7 +5,7 @@ function nav_items(array $u): array
 {
     $items = match ($u['role']) {
         'admin' => [['dashboard','Visao geral','home'],['users','Profissionais','users'],['exercises','Banco de exercicios','catalog'],['finance','Financeiro','finance']],
-        'professional' => [['dashboard','Visao geral','home'],['students','Meus alunos','users'],['exercises','Catalogo de exercicios','catalog'],['finance','Planos e financeiro','finance'],['branding','Minha marca','settings'],['account','Minha conta','settings']],
+        'professional' => array_values(array_filter([['dashboard','Visao geral','home'],['students','Meus alunos','users'],['exercises','Catalogo de exercicios','catalog'],['finance','Planos e financeiro','finance'],in_array((string)($u['subscription_plan']??'basic'),['plus','premium'],true)?['branding','Minha marca','settings']:null,['account','Minha conta','settings']])),
         default => [['dashboard','Inicio','home'],['my-anamnesis','Minha anamnese','document'],['my-workouts','Meus treinos','workout'],['my-progress','Evolucao','progress'],['messages','Mensagens','message'],['account','Minha conta','settings']],
     };
     return $items;
