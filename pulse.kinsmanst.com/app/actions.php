@@ -7,6 +7,9 @@ function handle_post(): void
     security_request_guard();
     verify_csrf();
     $action = (string)($_POST['action'] ?? '');
+        if (in_array($action, ['create_food_plan','save_meal','delete_meal','publish_food_plan'], true)) {
+            throw new RuntimeException('O módulo de nutrição não está disponível nesta plataforma.');
+        }
     try {
         $turnstileActions=['login'=>'login','register_professional'=>'register','forgot'=>'forgot_password'];
         if(isset($turnstileActions[$action])) verify_turnstile($turnstileActions[$action]);
@@ -105,16 +108,17 @@ function action_register_professional(): never
     $phone=trim((string)($_POST['phone']??''));
     $password=(string)($_POST['password']??'');
     $confirmation=(string)($_POST['password_confirmation']??'');
-    $service='complete';
+    $service='personal';
     $plan=(string)($_POST['plan']??'basic');
     $billingStart=(string)($_POST['billing_start']??'trial');
+    $billingCycle=(string)($_POST['billing_cycle']??'monthly');
     if($name===''||!filter_var($email,FILTER_VALIDATE_EMAIL)) throw new RuntimeException('Informe nome e e-mail válidos.');
       assert_strong_password($password);
 
 if (!hash_equals($password, $confirmation)) {
     throw new RuntimeException('As senhas não coincidem.');
 }
-    if(!in_array($service,['personal','nutrition','complete'],true)||!in_array($plan,['basic','plus','premium'],true)||!in_array($billingStart,['trial','now'],true)) throw new RuntimeException('Modalidade, plano ou forma de início inválidos.');
+    if(!in_array($service,['personal','nutrition','complete'],true)||!in_array($plan,['basic','plus','premium'],true)||!in_array($billingStart,['trial','now'],true)||!in_array($billingCycle,['monthly','annual'],true)) throw new RuntimeException('Modalidade, plano ou forma de início inválidos.');
     if(empty($_POST['accept_terms'])) throw new RuntimeException('Você precisa aceitar os Termos de Uso e a Política de Privacidade.');
     $exists=db()->prepare('SELECT id FROM users WHERE email=? LIMIT 1');$exists->execute([$email]);
     if($exists->fetchColumn()) throw new RuntimeException('Este e-mail já possui cadastro.');
@@ -129,11 +133,14 @@ if (!hash_equals($password, $confirmation)) {
     $referredBy=null;$incomingRef=strtoupper(trim((string)($_POST['referral_code']??'')));
     if($incomingRef!==''){$ref=db()->prepare('SELECT id FROM professionals WHERE referral_code=? LIMIT 1');$ref->execute([$incomingRef]);$referredBy=(int)$ref->fetchColumn()?:null;}
     $isTrial=$billingStart==='trial';
+    $signupPrice=$billingCycle==='annual'
+        ? match($plan){'basic'=>29700,'plus'=>59400,'premium'=>96600,default=>29700}
+        : subscription_price($plan,$service);
     $subscriptionStatus=$isTrial?'trial':'cancelled';
     $trialEndsAt=$isTrial?(new DateTimeImmutable('now'))->modify('+7 days')->format('Y-m-d H:i:s'):null;
     db()->prepare('INSERT INTO professionals(tenant_id,user_id,service_type,subscription_plan,subscription_status,trial_ends_at,referral_code,referred_by_professional_id) VALUES(?,?,?,?,?,?,?,?)')->execute([$tenantId,$uid,$service,$plan,$subscriptionStatus,$trialEndsAt,$referralCode,$referredBy]);
     $pid=(int)db()->lastInsertId();
-    db()->prepare('INSERT INTO professional_subscriptions(tenant_id,professional_id,plan_code,price_cents,status,starts_at,ends_at) VALUES(?,?,?,?,?,NOW(),?)')->execute([$tenantId,$pid,$plan,subscription_price($plan,$service),$subscriptionStatus,$trialEndsAt]);
+    db()->prepare('INSERT INTO professional_subscriptions(tenant_id,professional_id,plan_code,price_cents,status,starts_at,ends_at) VALUES(?,?,?,?,?,NOW(),?)')->execute([$tenantId,$pid,$plan,$signupPrice,$subscriptionStatus,$trialEndsAt]);
     if($referredBy)db()->prepare("INSERT IGNORE INTO referral_rewards(referrer_professional_id,referred_professional_id,status) VALUES(?,?,'pending')")->execute([$referredBy,$pid]);
     db()->commit();
     $welcomeSent=send_professional_welcome_email(['name'=>$name,'email'=>$email]);
@@ -146,7 +153,7 @@ if (!hash_equals($password, $confirmation)) {
         redirect(url('dashboard'));
     }
     try {
-        redirect(create_asaas_checkout_for_professional(['id'=>$uid,'tenant_id'=>$tenantId],$pid,$plan));
+        redirect(create_asaas_checkout_for_professional(['id'=>$uid,'tenant_id'=>$tenantId],$pid,$plan,$billingCycle));
     } catch (Throwable $e) {
         flash('error','Sua conta foi criada, mas não foi possível abrir o pagamento agora. Acesse o Financeiro para tentar novamente.');
         redirect(url('finance'));
@@ -355,8 +362,8 @@ function action_create_professional(): never
     $u=require_role('admin'); $email=strtolower(trim((string)$_POST['email'])); $password=(string)$_POST['password']; if(strlen($password)<8) throw new RuntimeException('Senha muito curta.');
     db()->beginTransaction(); db()->prepare('INSERT INTO users(tenant_id,role,name,email,password_hash,phone) VALUES(?,?,?,?,?,?)')->execute([$u['tenant_id'],'professional',$_POST['name'],$email,password_hash($password,PASSWORD_DEFAULT),$_POST['phone']?:null]); $uid=(int)db()->lastInsertId();
     $referralCode='KIN'.strtoupper(bin2hex(random_bytes(4)));
-    db()->prepare("INSERT INTO professionals(tenant_id,user_id,service_type,registration_number,specialty,subscription_plan,subscription_status,trial_ends_at,referral_code) VALUES(?,?,?,?,?,'basic','cancelled',NULL,?)")->execute([$u['tenant_id'],$uid,'complete',$_POST['registration_number']?:null,$_POST['specialty']?:null,$referralCode]);$pid=(int)db()->lastInsertId();
-    db()->prepare("INSERT INTO professional_subscriptions(tenant_id,professional_id,plan_code,price_cents,status,ends_at) VALUES(?,?,'basic',?,'cancelled',NOW())")->execute([$u['tenant_id'],$pid,subscription_price('basic','complete')]);
+    db()->prepare("INSERT INTO professionals(tenant_id,user_id,service_type,registration_number,specialty,subscription_plan,subscription_status,trial_ends_at,referral_code) VALUES(?,?,?,?,?,'basic','cancelled',NULL,?)")->execute([$u['tenant_id'],$uid,'personal',$_POST['registration_number']?:null,$_POST['specialty']?:null,$referralCode]);$pid=(int)db()->lastInsertId();
+    db()->prepare("INSERT INTO professional_subscriptions(tenant_id,professional_id,plan_code,price_cents,status,ends_at) VALUES(?,?,'basic',?,'cancelled',NOW())")->execute([$u['tenant_id'],$pid,subscription_price('basic','personal')]);
     db()->commit(); audit('professional.created','user',$uid); flash('success','Profissional cadastrado. A conta será liberada após a ativação do plano.'); redirect(url('users'));
 }
 
@@ -370,11 +377,14 @@ function subscription_price(string $plan,string $serviceType='complete'): int
     return match($plan){'basic'=>3990,'plus'=>7990,'premium'=>12990,default=>3990};
 }
 
-function create_asaas_checkout_for_professional(array $user,int $professionalId,string $plan): string
+function create_asaas_checkout_for_professional(array $user,int $professionalId,string $plan,string $billingCycle='monthly'): string
 {
     if(!in_array($plan,['basic','plus','premium'],true))throw new RuntimeException('Plano inválido.');
-    $q=db()->prepare('SELECT service_type FROM professionals WHERE id=?');$q->execute([$professionalId]);$service=(string)$q->fetchColumn();if($service==='')throw new RuntimeException('Profissional inválido.');$price=subscription_price($plan,$service);$reference='pulse-prof-'.$professionalId.'-'.$plan.'-'.bin2hex(random_bytes(6));$appUrl=rtrim((string)env('APP_URL'),'/');
-    $payload=['billingTypes'=>['CREDIT_CARD'],'chargeTypes'=>['RECURRENT'],'minutesToExpire'=>60,'externalReference'=>$reference,'callback'=>['successUrl'=>$appUrl.'/index.php?page=finance&checkout=success','cancelUrl'=>$appUrl.'/index.php?page=finance&checkout=cancel','expiredUrl'=>$appUrl.'/index.php?page=finance&checkout=expired'],'items'=>[['name'=>'Kinsman Pulse '.ucfirst($plan),'description'=>'Assinatura mensal · Personal + Nutrição','quantity'=>1,'value'=>$price/100]],'subscription'=>['cycle'=>'MONTHLY','nextDueDate'=>date('Y-m-d H:i:s',time()+300)]];
+    $q=db()->prepare('SELECT service_type FROM professionals WHERE id=?');$q->execute([$professionalId]);$service=(string)$q->fetchColumn();if($service==='')throw new RuntimeException('Profissional inválido.');$price=$billingCycle==='annual'
+        ? match($plan){'basic'=>29700,'plus'=>59400,'premium'=>96600,default=>29700}
+        : subscription_price($plan,$service);
+    $reference='pulse-prof-'.$professionalId.'-'.$plan.'-'.bin2hex(random_bytes(6));$appUrl=rtrim((string)env('APP_URL'),'/');
+    $payload=['billingTypes'=>['CREDIT_CARD'],'chargeTypes'=>['RECURRENT'],'minutesToExpire'=>60,'externalReference'=>$reference,'callback'=>['successUrl'=>$appUrl.'/index.php?page=finance&checkout=success','cancelUrl'=>$appUrl.'/index.php?page=finance&checkout=cancel','expiredUrl'=>$appUrl.'/index.php?page=finance&checkout=expired'],'items'=>[['name'=>'Kinsman Pulse '.ucfirst($plan),'description'=>'Assinatura mensal · Personal','quantity'=>1,'value'=>$price/100]],'subscription'=>['cycle'=>'MONTHLY','nextDueDate'=>date('Y-m-d H:i:s',time()+300)]];
     $checkout=asaas_request('POST','/checkouts',$payload);$checkoutId=(string)($checkout['id']??'');if($checkoutId==='')throw new RuntimeException('A Asaas não retornou o checkout.');
     db()->prepare("UPDATE professional_subscriptions SET status='cancelled',ends_at=NOW() WHERE professional_id=? AND status='trial'")->execute([$professionalId]);
     db()->prepare('INSERT INTO professional_subscriptions(tenant_id,professional_id,plan_code,price_cents,status,asaas_checkout_id,external_reference) VALUES(?,?,?,?,\'cancelled\',?,?)')->execute([$user['tenant_id'],$professionalId,$plan,$price,$checkoutId,$reference]);
@@ -465,7 +475,7 @@ function action_create_student(): never
     if($limit!==null&&$activeStudents>=$limit)throw new RuntimeException('Limite do plano atingido. Faça upgrade para cadastrar outro aluno.');
     $password=(string)$_POST['password'];if(strlen($password)<8)throw new RuntimeException('Senha muito curta.'); db()->beginTransaction();
     db()->prepare('INSERT INTO users(tenant_id,role,name,email,password_hash,phone) VALUES(?,?,?,?,?,?)')->execute([$u['tenant_id'],'student',$_POST['name'],strtolower(trim((string)$_POST['email'])),password_hash($password,PASSWORD_DEFAULT),$_POST['phone']?:null]);$uid=(int)db()->lastInsertId();
-    db()->prepare('INSERT INTO students(tenant_id,user_id,professional_id,service_type,objective,birth_date,height_cm,current_weight_kg,target_weight_kg,started_at) VALUES(?,?,?,?,?,?,?,?,?,CURDATE())')->execute([$u['tenant_id'],$uid,$prof,$_POST['service_type'],$_POST['objective']?:null,$_POST['birth_date']?:null,height_to_cm($_POST['height_m']??null),$_POST['current_weight_kg']?:null,$_POST['target_weight_kg']?:null]);$sid=(int)db()->lastInsertId();
+    db()->prepare('INSERT INTO students(tenant_id,user_id,professional_id,service_type,objective,birth_date,height_cm,current_weight_kg,target_weight_kg,started_at) VALUES(?,?,?,?,?,?,?,?,?,CURDATE())')->execute([$u['tenant_id'],$uid,$prof,'personal',$_POST['objective']?:null,$_POST['birth_date']?:null,height_to_cm($_POST['height_m']??null),$_POST['current_weight_kg']?:null,$_POST['target_weight_kg']?:null]);$sid=(int)db()->lastInsertId();
     if($_POST['current_weight_kg']!=='')db()->prepare('INSERT INTO assessments(student_id,weight_kg,notes) VALUES(?,?,?)')->execute([$sid,$_POST['current_weight_kg'],'Cadastro inicial']);db()->commit();audit('student.created','student',$sid);flash('success','Aluno cadastrado e acesso criado.');redirect(url('student',['id'=>$sid]));
 }
 
@@ -473,7 +483,7 @@ function get_scoped_student(int $id,array $u): array
 { [$where,$args]=student_scope_sql($u,'s');$stmt=db()->prepare("SELECT s.*,u.name,u.email,u.phone,p.user_id professional_user_id,pu.name professional_name FROM students s JOIN users u ON u.id=s.user_id JOIN professionals p ON p.id=s.professional_id JOIN users pu ON pu.id=p.user_id WHERE s.id=? AND $where");$stmt->execute(array_merge([$id],$args));$s=$stmt->fetch();if(!$s){http_response_code(404);exit('Aluno nao encontrado.');}return $s; }
 
 function action_update_record(): never
-{ $u=require_role(['admin','professional']);$id=(int)$_POST['student_id'];get_scoped_student($id,$u);db()->prepare('UPDATE students SET service_type=?,objective=?,birth_date=?,height_cm=?,target_weight_kg=?,clinical_notes=? WHERE id=?')->execute([$_POST['service_type'],$_POST['objective']?:null,$_POST['birth_date']?:null,height_to_cm($_POST['height_m']??null),$_POST['target_weight_kg']?:null,$_POST['clinical_notes']?:null,$id]);audit('record.updated','student',$id);flash('success','Prontuario atualizado.');redirect(url('student',['id'=>$id])); }
+{ $u=require_role(['admin','professional']);$id=(int)$_POST['student_id'];get_scoped_student($id,$u);db()->prepare('UPDATE students SET service_type=?,objective=?,birth_date=?,height_cm=?,target_weight_kg=?,clinical_notes=? WHERE id=?')->execute(['personal',$_POST['objective']?:null,$_POST['birth_date']?:null,height_to_cm($_POST['height_m']??null),$_POST['target_weight_kg']?:null,$_POST['clinical_notes']?:null,$id]);audit('record.updated','student',$id);flash('success','Prontuario atualizado.');redirect(url('student',['id'=>$id])); }
 
 function action_add_assessment(): never
 { $u=require_role(['admin','professional']);$id=(int)$_POST['student_id'];get_scoped_student($id,$u);db()->beginTransaction();db()->prepare('INSERT INTO assessments(student_id,weight_kg,waist_cm,hip_cm,body_fat_percent,notes) VALUES(?,?,?,?,?,?)')->execute([$id,$_POST['weight_kg']?:null,$_POST['waist_cm']?:null,$_POST['hip_cm']?:null,$_POST['body_fat_percent']?:null,$_POST['notes']?:null]);$aid=(int)db()->lastInsertId();if($_POST['weight_kg']!=='')db()->prepare('UPDATE students SET current_weight_kg=? WHERE id=?')->execute([$_POST['weight_kg'],$id]);$photo=upload_image('progress_photo','progress');if($photo)db()->prepare('INSERT INTO progress_photos(student_id,assessment_id,image_path,photo_type) VALUES(?,?,?,?)')->execute([$id,$aid,$photo,$_POST['photo_type']??'other']);db()->commit();flash('success','Avaliacao adicionada ao prontuario.');redirect(url('student',['id'=>$id])); }
@@ -602,7 +612,7 @@ function action_save_anamnesis(): never
     $u=require_role('student');$stmt=db()->prepare('SELECT id,service_type FROM students WHERE user_id=?');$stmt->execute([$u['id']]);$student=$stmt->fetch();$sid=(int)($student['id']??0);if(!$sid)throw new RuntimeException('Aluno não encontrado.');
     $birthDate=trim((string)($_POST['birth_date']??''));$height=height_to_cm($_POST['height_m']??null);$weight=(float)str_replace(',','.',(string)($_POST['weight_kg']??'0'));$objective=trim((string)($_POST['objective']??''));$routine=trim((string)($_POST['daily_routine']??''));
     if($birthDate===''||$height===null)throw new RuntimeException('Preencha nascimento e altura.');if($weight<20||$weight>400)throw new RuntimeException('Informe um peso válido.');if($routine==='')throw new RuntimeException('Conte como é sua rotina.');if($objective==='')throw new RuntimeException('Informe seu objetivo.');
-    $hasAllergies=(int)($_POST['has_allergies']??0);$usedErgogenics=(int)($_POST['used_ergogenics']??0);$mealsAtWork=(string)($_POST['meals_at_work']??'');if(!in_array($mealsAtWork,['0','1'],true))throw new RuntimeException('Informe se consegue fazer refeições no trabalho.');$hasTraining=$student['service_type']!=='nutrition';$trainingDays=$hasTraining?(int)($_POST['training_days_per_week']??0):null;$trainingMinutes=$hasTraining?(int)($_POST['training_minutes_per_session']??0):null;if($hasTraining&&($trainingDays<1||$trainingDays>7))throw new RuntimeException('Informe quantos dias por semana deseja treinar.');if($hasTraining&&($trainingMinutes<20||$trainingMinutes>180))throw new RuntimeException('O tempo de treino deve ficar entre 20 e 180 minutos.');
+    $hasAllergies=(int)($_POST['has_allergies']??0);$usedErgogenics=(int)($_POST['used_ergogenics']??0);$mealsAtWork=(string)($_POST['meals_at_work']??'');if(!in_array($mealsAtWork,['0','1'],true))throw new RuntimeException('Informe se consegue fazer refeições no trabalho.');$hasTraining=true;$trainingDays=$hasTraining?(int)($_POST['training_days_per_week']??0):null;$trainingMinutes=$hasTraining?(int)($_POST['training_minutes_per_session']??0):null;if($hasTraining&&($trainingDays<1||$trainingDays>7))throw new RuntimeException('Informe quantos dias por semana deseja treinar.');if($hasTraining&&($trainingMinutes<20||$trainingMinutes>180))throw new RuntimeException('O tempo de treino deve ficar entre 20 e 180 minutos.');
     db()->beginTransaction();
     db()->prepare('UPDATE students SET birth_date=?,height_cm=?,current_weight_kg=?,objective=? WHERE id=?')->execute([$birthDate,$height,$weight,$objective,$sid]);
     db()->prepare('INSERT INTO student_anamneses(student_id,daily_routine,training_days_per_week,training_minutes_per_session,meals_at_work,diseases,controlled_medications,injuries_surgeries,has_allergies,allergies,used_ergogenics,ergogenics,objective,submitted_at) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,NOW()) ON DUPLICATE KEY UPDATE daily_routine=VALUES(daily_routine),training_days_per_week=VALUES(training_days_per_week),training_minutes_per_session=VALUES(training_minutes_per_session),meals_at_work=VALUES(meals_at_work),diseases=VALUES(diseases),controlled_medications=VALUES(controlled_medications),injuries_surgeries=VALUES(injuries_surgeries),has_allergies=VALUES(has_allergies),allergies=VALUES(allergies),used_ergogenics=VALUES(used_ergogenics),ergogenics=VALUES(ergogenics),objective=VALUES(objective),submitted_at=NOW()')->execute([$sid,$routine,$trainingDays,$trainingMinutes,(int)$mealsAtWork,trim((string)($_POST['diseases']??''))?:null,trim((string)($_POST['controlled_medications']??''))?:null,trim((string)($_POST['injuries_surgeries']??''))?:null,$hasAllergies,$hasAllergies?(trim((string)($_POST['allergies']??''))?:null):null,$usedErgogenics,$usedErgogenics?(trim((string)($_POST['ergogenics']??''))?:null):null,$objective]);

@@ -370,3 +370,162 @@
     grid-template-columns: 1fr;
   }
 }
+
+.register-card .billing-cycle {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  margin: 18px 0 24px;
+  padding: 0;
+  border: 0;
+}
+
+.register-card .billing-cycle legend {
+  grid-column: 1 / -1;
+  margin-bottom: 2px;
+  font-weight: 800;
+  color: #173f36;
+}
+
+.register-card .billing-cycle label {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 82px;
+  padding: 16px 18px;
+  border: 1px solid #d5e3dc;
+  border-radius: 14px;
+  background: #fff;
+  cursor: pointer;
+  transition: .2s ease;
+}
+
+.register-card .billing-cycle label:hover {
+  border-color: #178263;
+  transform: translateY(-1px);
+}
+
+.register-card .billing-cycle label:has(input:checked) {
+  border: 2px solid #178263;
+  background: #eff8f3;
+  box-shadow: 0 8px 22px rgba(23,130,99,.12);
+}
+
+.register-card .billing-cycle label:has(input[value="annual"]) {
+  border-color: #9abf42;
+  background: linear-gradient(135deg,#f4fae9,#e9f6ed);
+}
+
+.register-card .billing-cycle input {
+  width: 18px;
+  height: 18px;
+  accent-color: #178263;
+}
+
+.register-card .billing-cycle b {
+  display: block;
+  color: #173f36;
+  font-size: 15px;
+}
+
+.register-card .billing-cycle small {
+  display: block;
+  margin-top: 4px;
+  color: #60776d;
+  font-size: 12px;
+}
+
+.register-card .billing-cycle em {
+  display: inline-block;
+  margin-left: 5px;
+  color: #168052;
+  font-style: normal;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+@media (max-width: 600px) {
+  .register-card .billing-cycle {
+    grid-template-columns: 1fr;
+  }
+}
+
+
+.register-card .billing-cycle {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  margin: 18px 0 24px;
+  padding: 0;
+  border: 0;
+}
+
+.register-card .billing-cycle legend {
+  grid-column: 1 / -1;
+  margin-bottom: 2px;
+  font-weight: 800;
+  color: #173f36;
+}
+
+.register-card .billing-cycle label {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 82px;
+  padding: 16px 18px;
+  border: 1px solid #d5e3dc;
+  border-radius: 14px;
+  background: #fff;
+  cursor: pointer;
+  transition: .2s ease;
+}
+
+.register-card .billing-cycle label:hover {
+  border-color: #178263;
+  transform: translateY(-1px);
+}
+
+.register-card .billing-cycle label:has(input:checked) {
+  border: 2px solid #178263;
+  background: #eff8f3;
+  box-shadow: 0 8px 22px rgba(23,130,99,.12);
+}
+
+.register-card .billing-cycle label:has(input[value="annual"]) {
+  border-color: #9abf42;
+  background: linear-gradient(135deg,#f4fae9,#e9f6ed);
+}
+
+.register-card .billing-cycle input {
+  width: 18px;
+  height: 18px;
+  accent-color: #178263;
+}
+
+.register-card .billing-cycle b {
+  display: block;
+  color: #173f36;
+  font-size: 15px;
+}
+
+.register-card .billing-cycle small {
+  display: block;
+  margin-top: 4px;
+  color: #60776d;
+  font-size: 12px;
+}
+
+.register-card .billing-cycle em {
+  display: inline-block;
+  margin-left: 5px;
+  color: #168052;
+  font-style: normal;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+@media (max-width: 600px) {
+  .register-card .billing-cycle {
+    grid-template-columns: 1fr;
+  }
+}

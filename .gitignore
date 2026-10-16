@@ -26,3 +26,5 @@ __MACOSX/
 .idea/
 *.swp
 *.swo
+
+*.bak-*

@@ -2349,6 +2349,95 @@ small {
 .movement-demo > div.main small {
   color: #eee9ff;
 }
+
+.video-media {
+  min-height: 150px;
+}
+
+.youtube-button {
+  align-items: center;
+  gap: 10px;
+  background: #fff0f0;
+  color: #c4161c;
+  border: 1px solid #ffd4d4;
+  box-shadow: 0 10px 24px rgba(196, 22, 28, .08);
+}
+
+.youtube-button span {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  background: #c4161c;
+  color: #fff;
+}
+
+.youtube-button .ui-icon {
+  width: 21px;
+  height: 21px;
+}
+
+.youtube-button:hover {
+  background: #c4161c;
+  color: #fff;
+}
+
+.youtube-button:hover span {
+  background: #fff;
+  color: #c4161c;
+}
+
+@media (max-width: 900px) {
+  .food-plan-panel .panel-head {
+    align-items: stretch;
+  }
+
+  .food-create,
+  .food-create > summary {
+    width: 100%;
+  }
+
+  .food-create[open] {
+    display: block;
+  }
+
+  .food-create .popover {
+    position: static;
+    inset: auto;
+    width: 100%;
+    max-height: none;
+    margin-top: 12px;
+    padding: 16px;
+    border: 1px solid var(--line);
+    border-radius: 15px;
+    box-shadow: none;
+    background: #f7fbf9;
+  }
+
+  .food-create .popover button {
+    width: 100%;
+  }
+
+  .video-media {
+    min-height: auto;
+    padding: 18px;
+    background: #fff;
+  }
+
+  .video-media .youtube-button {
+    width: 100%;
+    justify-content: center;
+    margin-top: 0;
+    padding: 14px 16px;
+    border-radius: 13px;
+    font-size: .9rem;
+  }
+
+  .exercise-check-content:not(:has(.exercise-media)) {
+    grid-template-columns: 1fr;
+  }
+}
 .session-hero.is-waiting {
   background: linear-gradient(
     125deg,

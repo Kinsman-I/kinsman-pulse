@@ -6,15 +6,9 @@ function nav_items(array $u): array
     $items = match ($u['role']) {
         'admin' => [['dashboard','Visao geral','home'],['users','Profissionais','users'],['exercises','Banco de exercicios','catalog'],['finance','Financeiro','finance']],
         'professional' => [['dashboard','Visao geral','home'],['students','Meus alunos','users'],['exercises','Catalogo de exercicios','catalog'],['finance','Planos e financeiro','finance'],['branding','Minha marca','settings'],['account','Minha conta','settings']],
-        default => [['dashboard','Inicio','home'],['my-anamnesis','Minha anamnese','document'],['my-plan','Meu plano','nutrition'],['my-workouts','Meus treinos','workout'],['my-progress','Evolucao','progress'],['messages','Mensagens','message'],['account','Minha conta','settings']],
+        default => [['dashboard','Inicio','home'],['my-anamnesis','Minha anamnese','document'],['my-workouts','Meus treinos','workout'],['my-progress','Evolucao','progress'],['messages','Mensagens','message'],['account','Minha conta','settings']],
     };
-    if (($u['role'] ?? '') !== 'student') return $items;
-    $service = (string)($u['access_service_type'] ?? 'complete');
-    return array_values(array_filter($items, static function(array $item) use ($service): bool {
-        if ($item[0] === 'my-plan' && $service === 'personal') return false;
-        if ($item[0] === 'my-workouts' && $service === 'nutrition') return false;
-        return true;
-    }));
+    return $items;
 }
 
 function interface_icon(string $name): string
@@ -45,7 +39,7 @@ function render(string $title, callable $body, bool $guest = false): void
     ?><!doctype html><html lang="pt-BR"><head>
     <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
     <?php $canonicalPage = (string)($_GET['page'] ?? 'home'); $publicPage = in_array($canonicalPage, ['home','demo','privacy','terms','cookies'], true); $canonicalUrl = rtrim((string)env('APP_URL','https://pulse.kinsmanst.com'), '/') . ($canonicalPage === 'home' ? '/' : '/index.php?page=' . rawurlencode($canonicalPage)); ?>
-    <?php if ($publicPage): ?><link rel="canonical" href="<?= e($canonicalUrl) ?>"><meta name="description" content="<?= e($canonicalPage === 'home' ? 'Kinsman Pulse: organize alunos, treinos, planos alimentares e evolução para personal trainers e nutricionistas.' : $title . ' do Kinsman Pulse.') ?>"><meta property="og:type" content="website"><meta property="og:url" content="<?= e($canonicalUrl) ?>"><meta property="og:title" content="<?= e($title) ?> · Kinsman Pulse"><meta property="og:description" content="Organize alunos, treinos, planos alimentares e evolução em um só lugar."><meta property="og:site_name" content="Kinsman Pulse"><meta name="twitter:card" content="summary">
+    <?php if ($publicPage): ?><link rel="canonical" href="<?= e($canonicalUrl) ?>"><meta name="description" content="<?= e($canonicalPage === 'home' ? 'Kinsman Pulse: organize alunos, treinos e evolução para personal trainers.' : $title . ' do Kinsman Pulse.') ?>"><meta property="og:type" content="website"><meta property="og:url" content="<?= e($canonicalUrl) ?>"><meta property="og:title" content="<?= e($title) ?> · Kinsman Pulse"><meta property="og:description" content="Organize alunos, treinos, planos alimentares e evolução em um só lugar."><meta property="og:site_name" content="Kinsman Pulse"><meta name="twitter:card" content="summary">
     <?php endif; ?><link rel="icon" type="image/png" sizes="64x64" href="/assets/images/logo-kinsman-64.png?v=1"><link rel="apple-touch-icon" sizes="180x180" href="/assets/images/logo-kinsman-180.png?v=1">
     <meta name="theme-color" content="<?= e($tenantColor) ?>"><title><?= e($title) ?> · <?= e((string)env('APP_NAME')) ?></title>
     <link rel="stylesheet" href="assets/app.css?v=42">

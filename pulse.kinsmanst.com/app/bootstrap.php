@@ -104,7 +104,7 @@ function current_user(): ?array
         WHEN u.role='student' THEN COALESCE(studentp.footer_text, 'Tecnologia Kinsman')
         ELSE COALESCE(t.name, 'Tecnologia Kinsman')
       END footer_text
-      ,COALESCE(stu.service_type, ownp.service_type, 'complete') access_service_type
+      ,'personal' access_service_type
       FROM users u JOIN tenants t ON t.id=u.tenant_id
       LEFT JOIN professionals ownp ON ownp.user_id=u.id
       LEFT JOIN students stu ON stu.user_id=u.id
