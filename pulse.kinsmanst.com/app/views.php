@@ -3,6 +3,9 @@ declare(strict_types=1);
 
 function nav_items(array $u): array
 {
+    if (($u['role'] ?? '') === 'professional' && professional_access_blocked($u)) {
+        return [['finance','Concluir pagamento','finance'],['account','Minha conta','settings']];
+    }
     $items = match ($u['role']) {
         'admin' => [['dashboard','Visao geral','home'],['users','Profissionais','users'],['exercises','Banco de exercicios','catalog'],['finance','Financeiro','finance']],
         'professional' => array_values(array_filter([['dashboard','Visao geral','home'],['students','Meus alunos','users'],['exercises','Catalogo de exercicios','catalog'],['finance','Planos e financeiro','finance'],in_array((string)($u['subscription_plan']??'basic'),['plus','premium'],true)?['branding','Minha marca','settings']:null,['account','Minha conta','settings']])),
@@ -42,19 +45,20 @@ function render(string $title, callable $body, bool $guest = false): void
     <?php if ($publicPage): ?><link rel="canonical" href="<?= e($canonicalUrl) ?>"><meta name="description" content="<?= e($canonicalPage === 'home' ? 'Kinsman Pulse: organize alunos, treinos e evolução para personal trainers.' : $title . ' do Kinsman Pulse.') ?>"><meta property="og:type" content="website"><meta property="og:url" content="<?= e($canonicalUrl) ?>"><meta property="og:title" content="<?= e($title) ?> · Kinsman Pulse"><meta property="og:description" content="Organize alunos, fichas de treino e evolução em um só lugar."><meta property="og:site_name" content="Kinsman Pulse"><meta name="twitter:card" content="summary">
     <?php endif; ?><link rel="icon" type="image/png" sizes="256x256" href="/assets/images/favicon.png?v=2"><link rel="apple-touch-icon" href="/assets/images/pulse-icon.png?v=2">
     <meta name="theme-color" content="<?= e($tenantColor) ?>"><title><?= e($title) ?> · <?= e((string)env('APP_NAME')) ?></title>
-    <link rel="stylesheet" href="assets/app.css?v=44">
-    <link rel="stylesheet" href="assets/core.css?v=24">
-    <?php if ($guest): ?><link rel="stylesheet" href="assets/auth.css?v=25"><?php endif; ?>
+    <link rel="stylesheet" href="assets/app.css?v=47">
+    <link rel="stylesheet" href="assets/core.css?v=25">
+    <?php if ($guest): ?><link rel="stylesheet" href="assets/auth.css?v=26"><?php endif; ?>
     <style>:root{--brand:<?= e($tenantColor) ?>;--brand-dark:color-mix(in srgb,var(--brand) 58%,#061f19);--brand-soft:color-mix(in srgb,var(--brand) 11%,#fff)}</style></head>
     <body class="<?= $guest ? 'guest-body' : 'app-body' ?>">
-    <?php if ($guest): ?><header class="guest-top"><a class="brand" href="<?= url('home') ?>"><img class="official-logo pulse-wordmark" src="assets/images/logo-pulse-horizontal.png" decoding="async" alt="Pulse Treinos Inteligentes"></a><nav class="guest-nav"><a href="<?=url('home')?>#recursos">Recursos</a><a href="<?=url('terms')?>">Termos</a><a class="guest-login" href="<?= url('login') ?>">Entrar</a></nav></header><main class="guest-shell"><?php $body(); ?></main><footer class="guest-footer"><img class="footer-wordmark" src="assets/images/logo-pulse-horizontal.png" alt="Pulse Treinos Inteligentes"><span>© <?=date('Y')?> Kinsman Tecnologia</span><nav><a href="<?=url('privacy')?>">Privacidade e LGPD</a><a href="<?=url('terms')?>">Termos de Uso</a><a href="<?=url('cookies')?>">Política de Cookies</a></nav></footer>
+    <?php if ($guest): ?><header class="guest-top"><a class="brand brand-wordmark" href="<?= url('home') ?>"><img class="pulse-wordmark-light" src="assets/images/logo-pulse-horizontal-dark.png" decoding="async" alt="Pulse Treinos Inteligentes"></a><nav class="guest-nav"><a href="<?=url('home')?>#recursos">Recursos</a><a href="<?=url('terms')?>">Termos</a><a class="guest-login" href="<?= url('login') ?>">Entrar</a></nav></header><main class="guest-shell"><?php $body(); ?></main><footer class="guest-footer"><img class="footer-wordmark" src="assets/images/logo-pulse-horizontal.png" alt="Pulse Treinos Inteligentes"><span>© <?=date('Y')?> Kinsman Tecnologia</span><nav><a href="<?=url('privacy')?>">Privacidade e LGPD</a><a href="<?=url('terms')?>">Termos de Uso</a><a href="<?=url('cookies')?>">Política de Cookies</a></nav></footer>
     <?php else: ?>
+      <?php $officialSidebar=$u['role']==='admin'||($u['role']==='professional'&&($u['subscription_plan']??'basic')==='basic'); ?>
       <aside class="sidebar" id="main-menu">
-        <a class="brand" href="<?= url() ?>">
-          <?php if (!empty($u['logo_path'])): ?><img src="<?= e($u['logo_path']) ?>" alt="Logo de <?= e($u['tenant_name']) ?>">
-          <?php elseif ($u['role'] === 'admin'): ?><img class="official-logo" src="assets/images/pulse-icon.png" width="44" height="44" decoding="async" alt="Pulse">
+        <a class="brand <?=$officialSidebar?'official-sidebar-brand':''?>" href="<?= url() ?>">
+          <?php if ($officialSidebar): ?><img class="sidebar-pulse-wordmark" src="assets/images/logo-pulse-horizontal-dark.png" decoding="async" alt="Pulse Treinos Inteligentes">
+          <?php elseif (!empty($u['logo_path'])): ?><img src="<?= e($u['logo_path']) ?>" alt="Logo de <?= e($u['tenant_name']) ?>">
           <?php else: ?><span class="brand-placeholder" aria-hidden="true"><?= e(strtoupper(substr((string) $u['tenant_name'], 0, 1))) ?></span><?php endif; ?>
-          <span><strong><?= e($u['tenant_name']) ?></strong><small>Pulse</small></span>
+          <?php if(!$officialSidebar):?><span><strong><?= e($u['tenant_name']) ?></strong><small>Pulse</small></span><?php endif;?>
         </a>
         <nav><?php foreach(nav_items($u) as [$page,$label,$icon]): ?><a class="<?= (($_GET['page'] ?? 'dashboard') === $page) ? 'active' : '' ?>" href="<?= url($page) ?>"><i><?= interface_icon($icon) ?></i><span><?= e($label) ?></span></a><?php endforeach; ?></nav>
         <div class="sidebar-foot"><small>Conectado como</small><strong><?= e($u['name']) ?></strong><span><?= e(['admin'=>'Administrador','professional'=>'Profissional','student'=>'Aluno'][$u['role']] ?? ucfirst($u['role'])) ?></span></div>
@@ -62,7 +66,7 @@ function render(string $title, callable $body, bool $guest = false): void
       <div class="app-main"><header class="topbar"> <button class="menu-toggle" type="button" aria-label="Abrir menu" aria-expanded="false" aria-controls="main-menu">&#9776;</button><div><strong><?= e($title) ?></strong><small><?= e(date('d/m/Y')) ?></small></div><div class="top-actions"><span class="avatar"><?= e(strtoupper(substr($u['name'],0,2))) ?></span><a class="button ghost" href="<?= url('logout') ?>">Sair</a></div></header>
       <main class="content"><?php foreach(flashes() as $f): ?><div class="alert <?= e($f['type']) ?>"><?= e($f['message']) ?></div><?php endforeach; ?><?php $body(); ?></main>
       <footer class="footer"><span>© <?= date('Y') ?> <?= e($u['tenant_name']) ?> · <?= e($u['footer_text'] ?? 'Tecnologia Kinsman') ?></span><nav><a href="<?=url('privacy')?>">Privacidade e LGPD</a><a href="<?=url('terms')?>">Termos de Uso</a><a href="<?=url('cookies')?>">Cookies</a></nav></footer><?php if($u['role']==='student'):?><a class="help-float" href="<?=url('messages')?>"><span><?=interface_icon('message')?></span><b>Falar com o profissional</b><small>Abrir mensagens</small></a><?php endif;?></div>
-    <?php endif; ?><aside class="cookie-banner" id="cookieBanner" role="dialog" aria-label="Preferências de cookies" hidden><div><strong>Privacidade e cookies</strong><p>Usamos cookies necessários para login e segurança. Cookies opcionais só serão utilizados com sua autorização.</p><a href="<?=url('cookies')?>">Saiba mais</a></div><div class="cookie-actions"><button type="button" data-cookie-choice="essential">Somente necessários</button><button type="button" class="primary" data-cookie-choice="accepted">Aceitar cookies</button></div></aside><script src="assets/app.js?v=39" defer></script></body></html><?php
+    <?php endif; ?><aside class="cookie-banner" id="cookieBanner" role="dialog" aria-label="Preferências de cookies" hidden><div><strong>Privacidade e cookies</strong><p>Usamos cookies necessários para login e segurança. Cookies opcionais só serão utilizados com sua autorização.</p><a href="<?=url('cookies')?>">Saiba mais</a></div><div class="cookie-actions"><button type="button" data-cookie-choice="essential">Somente necessários</button><button type="button" class="primary" data-cookie-choice="accepted">Aceitar cookies</button></div></aside><script src="assets/app.js?v=41" defer></script></body></html><?php
 }
 
 function page_header(string $eyebrow, string $title, string $copy = '', string $actions = ''): void

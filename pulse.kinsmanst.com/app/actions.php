@@ -14,7 +14,7 @@ function handle_post(): void
         $turnstileActions=['login'=>'login','register_professional'=>'register','forgot'=>'forgot_password'];
         if(isset($turnstileActions[$action])) verify_turnstile($turnstileActions[$action]);
         $u=current_user();
-        if(($u['role']??null)==='professional'&&!in_array($action,['start_asaas_checkout','cancel_subscription','request_account_deletion'],true)&&professional_access_blocked($u)) throw new RuntimeException('Sua assinatura não está ativa. Acesse o Financeiro para contratar ou regularizar o plano.');
+        if(($u['role']??null)==='professional'&&!in_array($action,['start_asaas_checkout','start_landing_page_checkout','cancel_subscription','request_account_deletion'],true)&&professional_access_blocked($u)) throw new RuntimeException('Sua assinatura não está ativa. Acesse o Financeiro para contratar ou regularizar o plano.');
         $professionalOnly=['save_brand','create_student','update_record','add_assessment','create_workout','generate_workout_draft','save_workout_item','delete_workout_item','publish_workout','delete_workout','reply_student_message','create_food_plan','save_meal','delete_meal','publish_food_plan'];
         if(($u['role']??null)==='admin' && in_array($action,$professionalOnly,true)) throw new RuntimeException('Esta operação é exclusiva do profissional responsável pelo aluno.');
         match ($action) {
@@ -26,6 +26,7 @@ function handle_post(): void
             'create_professional' => action_create_professional(),
             'update_professional_plan' => action_update_professional_plan(),
             'start_asaas_checkout' => action_start_asaas_checkout(),
+            'start_landing_page_checkout' => action_start_landing_page_checkout(),
             'cancel_subscription' => action_cancel_subscription(),
             'request_account_deletion' => action_request_account_deletion(),
             'create_student' => action_create_student(),
@@ -110,7 +111,7 @@ function action_register_professional(): never
     $confirmation=(string)($_POST['password_confirmation']??'');
     $service='personal';
     $plan=(string)($_POST['plan']??'basic');
-    $billingStart=(string)($_POST['billing_start']??'trial');
+    $billingStart='now';
     $billingCycle=(string)($_POST['billing_cycle']??'monthly');
     $landingPage=($_POST['landing_page']??'')==='1';
     if($name===''||!filter_var($email,FILTER_VALIDATE_EMAIL)) throw new RuntimeException('Informe nome e e-mail válidos.');
@@ -120,7 +121,7 @@ if (!hash_equals($password, $confirmation)) {
     throw new RuntimeException('As senhas não coincidem.');
 }
     if(!in_array($service,['personal','nutrition','complete'],true)||!in_array($plan,['basic','plus','premium'],true)||!in_array($billingStart,['trial','now'],true)||!in_array($billingCycle,['monthly','annual'],true)) throw new RuntimeException('Modalidade, plano ou forma de início inválidos.');
-    if($landingPage&&($billingStart!=='now'||$billingCycle!=='annual'||!in_array($plan,['plus','premium'],true))) throw new RuntimeException('A Landing Page está disponível somente na assinatura anual dos planos Plus e Premium.');
+    if($landingPage) throw new RuntimeException('A Landing Page pode ser adicionada no Financeiro depois que a assinatura for confirmada.');
     if(empty($_POST['accept_terms'])) throw new RuntimeException('Você precisa aceitar os Termos de Uso e a Política de Privacidade.');
     $exists=db()->prepare('SELECT id FROM users WHERE email=? LIMIT 1');$exists->execute([$email]);
     if($exists->fetchColumn()) throw new RuntimeException('Este e-mail já possui cadastro.');
@@ -128,38 +129,12 @@ if (!hash_equals($password, $confirmation)) {
     if($tenantId<1){$tenantId=(int)db()->query("SELECT tenant_id FROM users WHERE role='admin' AND active=1 ORDER BY id LIMIT 1")->fetchColumn();}
     if($tenantId<1) throw new RuntimeException('A plataforma ainda não está disponível para novos cadastros.');
     $passwordHash=password_hash($password,PASSWORD_DEFAULT);
-    db()->beginTransaction();
-    db()->prepare('INSERT INTO users(tenant_id,role,name,email,password_hash,phone) VALUES(?,?,?,?,?,?)')->execute([$tenantId,'professional',$name,$email,$passwordHash,$phone?:null]);
-    $uid=(int)db()->lastInsertId();
-    $referralCode='KIN'.strtoupper(bin2hex(random_bytes(4)));
-    $referredBy=null;$incomingRef=strtoupper(trim((string)($_POST['referral_code']??'')));
-    if($incomingRef!==''){$ref=db()->prepare('SELECT id FROM professionals WHERE referral_code=? LIMIT 1');$ref->execute([$incomingRef]);$referredBy=(int)$ref->fetchColumn()?:null;}
-    $isTrial=$billingStart==='trial';
-    $signupPrice=$billingCycle==='annual'
-        ? match($plan){'basic'=>29700,'plus'=>59400,'premium'=>96600,default=>29700}
-        : subscription_price($plan,$service);
-    $subscriptionStatus=$isTrial?'trial':'cancelled';
-    $trialEndsAt=$isTrial?(new DateTimeImmutable('now'))->modify('+7 days')->format('Y-m-d H:i:s'):null;
-    db()->prepare('INSERT INTO professionals(tenant_id,user_id,service_type,subscription_plan,subscription_status,trial_ends_at,referral_code,referred_by_professional_id) VALUES(?,?,?,?,?,?,?,?)')->execute([$tenantId,$uid,$service,$plan,$subscriptionStatus,$trialEndsAt,$referralCode,$referredBy]);
-    $pid=(int)db()->lastInsertId();
-    db()->prepare('INSERT INTO professional_subscriptions(tenant_id,professional_id,plan_code,price_cents,status,starts_at,ends_at) VALUES(?,?,?,?,?,NOW(),?)')->execute([$tenantId,$pid,$plan,$signupPrice,$subscriptionStatus,$trialEndsAt]);
-    if($referredBy)db()->prepare("INSERT IGNORE INTO referral_rewards(referrer_professional_id,referred_professional_id,status) VALUES(?,?,'pending')")->execute([$referredBy,$pid]);
-    db()->commit();
-    $welcomeSent=send_professional_welcome_email(['name'=>$name,'email'=>$email]);
-    session_regenerate_id(true);
-    $_SESSION['user_id']=$uid;
-    $_SESSION['auth_fingerprint']=hash('sha256',$passwordHash);
-    audit('professional.self_registered','professional',$pid,['plan'=>$plan,'service_type'=>$service,'billing_start'=>$billingStart,'billing_cycle'=>$billingCycle,'landing_page'=>$landingPage,'trial_ends_at'=>$trialEndsAt,'welcome_email'=>$welcomeSent]);
-    if($isTrial){
-        flash('success',$welcomeSent?'Seu teste de 7 dias começou. Enviamos o manual de uso para seu e-mail.':'Seu teste de 7 dias começou. Aproveite a plataforma.');
-        redirect(url('dashboard'));
-    }
-    try {
-        redirect(create_asaas_checkout_for_professional(['id'=>$uid,'tenant_id'=>$tenantId],$pid,$plan,$billingCycle,$landingPage));
-    } catch (Throwable $e) {
-        flash('error','Sua conta foi criada, mas não foi possível abrir o pagamento agora. Acesse o Financeiro para tentar novamente.');
-        redirect(url('finance'));
-    }
+    $incomingRef=strtoupper(trim((string)($_POST['referral_code']??'')));
+    if(!db_table_exists('pending_professional_signups')) throw new RuntimeException('A atualização do pagamento seguro ainda não foi aplicada no servidor.');
+    $pending=db()->prepare("SELECT asaas_checkout_id FROM pending_professional_signups WHERE email=? AND status='pending' AND created_at>=DATE_SUB(NOW(),INTERVAL 1 DAY) ORDER BY id DESC LIMIT 1");
+    $pending->execute([$email]);$pendingCheckout=(string)$pending->fetchColumn();
+    if($pendingCheckout!=='')redirect(asaas_checkout_url($pendingCheckout));
+    redirect(create_asaas_checkout_for_pending_signup($tenantId,$name,$email,$phone,$passwordHash,$plan,$billingCycle,$incomingRef));
 }
 
 function send_professional_welcome_email(array $professional): bool
@@ -381,6 +356,29 @@ function subscription_price(string $plan,string $serviceType='complete'): int
     return match($plan){'basic'=>3990,'plus'=>7990,'premium'=>12990,default=>3990};
 }
 
+function create_asaas_checkout_for_pending_signup(int $tenantId,string $name,string $email,string $phone,string $passwordHash,string $plan,string $billingCycle,string $incomingRef=''): string
+{
+    if(!in_array($plan,['basic','plus','premium'],true)||!in_array($billingCycle,['monthly','annual'],true))throw new RuntimeException('Plano ou periodicidade inválidos.');
+    $price=$billingCycle==='annual'?match($plan){'basic'=>29700,'plus'=>59400,'premium'=>96600}:subscription_price($plan,'personal');
+    $reference='pulse-signup-'.bin2hex(random_bytes(12));
+    db()->prepare('INSERT INTO pending_professional_signups(tenant_id,name,email,phone,password_hash,plan_code,billing_cycle,price_cents,referral_code,external_reference) VALUES(?,?,?,?,?,?,?,?,?,?)')->execute([$tenantId,$name,$email,$phone?:null,$passwordHash,$plan,$billingCycle,$price,$incomingRef?:null,$reference]);
+    $pendingId=(int)db()->lastInsertId();
+    $appUrl=rtrim((string)env('APP_URL'),'/');
+    $cycle=$billingCycle==='annual'?'YEARLY':'MONTHLY';
+    $payload=['billingTypes'=>['CREDIT_CARD'],'chargeTypes'=>['RECURRENT'],'minutesToExpire'=>60,'externalReference'=>$reference,'callback'=>['successUrl'=>$appUrl.'/index.php?page=payment-status&ref='.rawurlencode($reference),'cancelUrl'=>$appUrl.'/index.php?page=register&payment=cancel','expiredUrl'=>$appUrl.'/index.php?page=register&payment=expired'],'items'=>[['name'=>'Kinsman Pulse '.ucfirst($plan),'description'=>'Assinatura '.($billingCycle==='annual'?'anual':'mensal').' · Personal','quantity'=>1,'value'=>$price/100]],'subscription'=>['cycle'=>$cycle,'nextDueDate'=>date('Y-m-d H:i:s',time()+300)]];
+    try{
+        $checkout=asaas_request('POST','/checkouts',$payload);
+        $checkoutId=(string)($checkout['id']??'');
+        if($checkoutId==='')throw new RuntimeException('A Asaas não retornou o checkout.');
+        db()->prepare('UPDATE pending_professional_signups SET asaas_checkout_id=? WHERE id=?')->execute([$checkoutId,$pendingId]);
+        return asaas_checkout_url($checkoutId);
+    }catch(Throwable $e){
+        db()->prepare("UPDATE pending_professional_signups SET status='failed' WHERE id=?")->execute([$pendingId]);
+        error_log('Pulse checkout de novo cadastro falhou para solicitação '.$pendingId.': '.$e->getMessage());
+        throw $e;
+    }
+}
+
 function create_asaas_landing_page_checkout(array $user,int $professionalId,string $plan): string
 {
     if(!db_table_exists('professional_addon_orders'))throw new RuntimeException('Atualização de adicionais pendente no banco de dados.');
@@ -420,8 +418,24 @@ function action_start_asaas_checkout(): never
 {
     $u=require_role('professional');$plan=(string)($_POST['plan']??'');
     $billingCycle=(string)($_POST['billing_cycle']??'monthly');
-    $landingPage=($_POST['landing_page']??'')==='1';
-    redirect(create_asaas_checkout_for_professional($u,professional_id($u),$plan,$billingCycle,$landingPage));
+    $landingPage=false;
+    $pid=professional_id($u);
+    try{
+        redirect(create_asaas_checkout_for_professional($u,$pid,$plan,$billingCycle,$landingPage));
+    }catch(RuntimeException $e){
+        error_log('Pulse checkout falhou para profissional '.$pid.': '.$e->getMessage());
+        flash('error','Não foi possível abrir o pagamento: '.$e->getMessage());
+        redirect(url('finance'));
+    }
+}
+
+function action_start_landing_page_checkout(): never
+{
+    $u=require_role('professional');
+    $pid=professional_id($u);
+    $q=db()->prepare("SELECT subscription_plan,subscription_status FROM professionals WHERE id=?");$q->execute([$pid]);$subscription=$q->fetch();
+    if(!$subscription||$subscription['subscription_status']!=='active')throw new RuntimeException('A assinatura precisa estar ativa antes de adicionar a Landing Page.');
+    redirect(create_asaas_landing_page_checkout($u,$pid,(string)$subscription['subscription_plan']));
 }
 
 function action_cancel_subscription(): never

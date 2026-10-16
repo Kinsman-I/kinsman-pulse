@@ -3,6 +3,26 @@
  * Cada bloco abaixo só atua quando o componente existe na página atual.
  */
 document.addEventListener("DOMContentLoaded", () => {
+  // Biblioteca Pulse: saída visível, clique no fundo e tecla Esc.
+  const libraryDrawer = document.querySelector(".library-drawer");
+  if (libraryDrawer) {
+    const closeLibrary = () => {
+      libraryDrawer.removeAttribute("open");
+      const currentUrl = new URL(window.location.href);
+      ["library", "lib_q", "lib_group"].forEach((key) =>
+        currentUrl.searchParams.delete(key),
+      );
+      history.replaceState({}, "", currentUrl);
+      libraryDrawer.querySelector("summary")?.focus();
+    };
+    libraryDrawer
+      .querySelectorAll("[data-close-library]")
+      .forEach((control) => control.addEventListener("click", closeLibrary));
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "Escape" && libraryDrawer.open) closeLibrary();
+    });
+  }
+
   // Reposiciona o editor no cartão de exercício em edição.
   const editForm = [...document.querySelectorAll("form")].find(
     (form) =>
@@ -392,7 +412,10 @@ document.addEventListener("DOMContentLoaded", () => {
     modal.append(dialog);
     document.body.append(modal);
 
-    skip.addEventListener("click", () => closeGuide());
+    skip.addEventListener("click", () => {
+      localStorage.setItem(storageKey, "dismissed");
+      closeGuide(false);
+    });
     back.addEventListener("click", () => {
       currentStep = Math.max(0, currentStep - 1);
       renderStep();

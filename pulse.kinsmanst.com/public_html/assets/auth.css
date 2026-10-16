@@ -458,6 +458,39 @@
   object-fit: contain;
 }
 
+.guest-top .brand-wordmark {
+  width: 238px;
+  height: 72px;
+  overflow: hidden;
+  border-radius: 0;
+}
+
+.guest-top .pulse-wordmark-light {
+  width: 238px;
+  height: 91px;
+  max-width: none;
+  margin-top: -7px;
+  object-fit: cover;
+  object-position: center;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+@media (max-width: 640px) {
+  .guest-top .brand-wordmark {
+    width: 184px;
+    height: 60px;
+  }
+
+  .guest-top .pulse-wordmark-light {
+    width: 190px;
+    height: 73px;
+    margin-top: -5px;
+  }
+}
+
 .auth-card .auth-brand {
   justify-content: flex-start;
 }

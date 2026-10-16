@@ -993,6 +993,7 @@
   font-weight: 900;
 }
 
+<<<<<<< HEAD
 .pl-plan-features li.is-unavailable {
   color: #8a9892;
 }
@@ -1003,6 +1004,8 @@
   content: "—";
 }
 
+=======
+>>>>>>> Redesenha seleção de planos anuais
 .pl-pricing .pl-button {
   margin-top: auto;
   padding: 14px;

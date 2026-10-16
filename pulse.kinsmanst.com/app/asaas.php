@@ -78,6 +78,36 @@ function process_asaas_webhook(array $payload): void
             }elseif(in_array($event,['CHECKOUT_CANCELED','CHECKOUT_EXPIRED'],true)){
                 db()->prepare("UPDATE professional_subscriptions SET status='cancelled',ends_at=NOW() WHERE id=?")->execute([$sub['id']]);
             }
+        }elseif(db_table_exists('pending_professional_signups')){
+            $q=db()->prepare("SELECT * FROM pending_professional_signups WHERE asaas_checkout_id=? AND status='pending' LIMIT 1");$q->execute([$checkoutId]);$pending=$q->fetch();
+            if($pending&&$event==='CHECKOUT_PAID'){
+                db()->beginTransaction();
+                try{
+                    $exists=db()->prepare('SELECT id FROM users WHERE email=? LIMIT 1');$exists->execute([$pending['email']]);
+                    if($exists->fetchColumn())throw new RuntimeException('Já existe uma conta com o e-mail do cadastro pago.');
+                    db()->prepare('INSERT INTO users(tenant_id,role,name,email,password_hash,phone) VALUES(?,?,?,?,?,?)')->execute([$pending['tenant_id'],'professional',$pending['name'],$pending['email'],$pending['password_hash'],$pending['phone']]);
+                    $userId=(int)db()->lastInsertId();
+                    $referredBy=null;
+                    if(!empty($pending['referral_code'])){$ref=db()->prepare('SELECT id FROM professionals WHERE referral_code=? LIMIT 1');$ref->execute([strtoupper((string)$pending['referral_code'])]);$referredBy=(int)$ref->fetchColumn()?:null;}
+                    $referralCode='KIN'.strtoupper(bin2hex(random_bytes(4)));
+                    db()->prepare("INSERT INTO professionals(tenant_id,user_id,service_type,subscription_plan,subscription_status,trial_ends_at,referral_code,referred_by_professional_id,asaas_customer_id) VALUES(?,?,'personal',?,'active',NULL,?,?,?)")->execute([$pending['tenant_id'],$userId,$pending['plan_code'],$referralCode,$referredBy,$checkout['customer']??null]);
+                    $professionalId=(int)db()->lastInsertId();
+                    db()->prepare("INSERT INTO professional_subscriptions(tenant_id,professional_id,plan_code,price_cents,status,asaas_checkout_id,asaas_subscription_id,asaas_customer_id,external_reference,starts_at,ends_at) VALUES(?,?,?,?,'active',?,?,?,?,NOW(),NULL)")->execute([$pending['tenant_id'],$professionalId,$pending['plan_code'],$pending['price_cents'],$checkoutId,$checkout['subscription']??null,$checkout['customer']??null,$pending['external_reference']]);
+                    if($referredBy)db()->prepare("INSERT IGNORE INTO referral_rewards(referrer_professional_id,referred_professional_id,status) VALUES(?,?,'pending')")->execute([$referredBy,$professionalId]);
+                    db()->prepare("UPDATE pending_professional_signups SET status='paid',paid_at=NOW() WHERE id=? AND status='pending'")->execute([$pending['id']]);
+                    db()->commit();
+                    send_professional_welcome_email(['name'=>$pending['name'],'email'=>$pending['email']]);
+                }catch(Throwable $e){
+                    if(db()->inTransaction())db()->rollBack();
+                    throw $e;
+                }
+            }elseif($pending&&in_array($event,['CHECKOUT_CANCELED','CHECKOUT_EXPIRED'],true)){
+                db()->prepare("UPDATE pending_professional_signups SET status='cancelled' WHERE id=?")->execute([$pending['id']]);
+            }elseif(db_table_exists('professional_addon_orders')){
+                $q=db()->prepare('SELECT id FROM professional_addon_orders WHERE asaas_checkout_id=? ORDER BY id DESC LIMIT 1');$q->execute([$checkoutId]);$addonId=(int)$q->fetchColumn();
+                if($addonId&&$event==='CHECKOUT_PAID')db()->prepare("UPDATE professional_addon_orders SET status='paid',paid_at=NOW() WHERE id=?")->execute([$addonId]);
+                elseif($addonId&&in_array($event,['CHECKOUT_CANCELED','CHECKOUT_EXPIRED'],true))db()->prepare("UPDATE professional_addon_orders SET status='cancelled' WHERE id=?")->execute([$addonId]);
+            }
         }elseif(db_table_exists('professional_addon_orders')){
             $q=db()->prepare('SELECT id FROM professional_addon_orders WHERE asaas_checkout_id=? ORDER BY id DESC LIMIT 1');$q->execute([$checkoutId]);$addonId=(int)$q->fetchColumn();
             if($addonId&&$event==='CHECKOUT_PAID')db()->prepare("UPDATE professional_addon_orders SET status='paid',paid_at=NOW() WHERE id=?")->execute([$addonId]);

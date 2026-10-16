@@ -131,6 +131,27 @@ CREATE TABLE IF NOT EXISTS professional_subscriptions (
   INDEX idx_subscription_prof_status (professional_id,status)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+CREATE TABLE IF NOT EXISTS pending_professional_signups (
+  id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  tenant_id BIGINT UNSIGNED NOT NULL,
+  name VARCHAR(160) NOT NULL,
+  email VARCHAR(190) NOT NULL,
+  phone VARCHAR(30) NULL,
+  password_hash VARCHAR(255) NOT NULL,
+  plan_code ENUM('basic','plus','premium') NOT NULL,
+  billing_cycle ENUM('monthly','annual') NOT NULL DEFAULT 'monthly',
+  price_cents INT UNSIGNED NOT NULL,
+  referral_code VARCHAR(24) NULL,
+  asaas_checkout_id VARCHAR(100) NULL UNIQUE,
+  external_reference VARCHAR(200) NOT NULL UNIQUE,
+  status ENUM('pending','paid','cancelled','failed') NOT NULL DEFAULT 'pending',
+  paid_at DATETIME NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  CONSTRAINT fk_pending_signup_tenant FOREIGN KEY (tenant_id) REFERENCES tenants(id) ON DELETE CASCADE,
+  INDEX idx_pending_signup_email_status (email,status)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 CREATE TABLE IF NOT EXISTS professional_addon_orders (
   id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   tenant_id BIGINT UNSIGNED NOT NULL,
