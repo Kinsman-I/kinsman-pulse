@@ -67,15 +67,23 @@ function process_asaas_webhook(array $payload): void
     if($insert->rowCount()===0){$seen=db()->prepare('SELECT processed_at FROM asaas_webhook_events WHERE event_id=?');$seen->execute([$eventId]);if($seen->fetchColumn())return;}
     if(str_starts_with($event,'CHECKOUT_')){
         $checkout=$payload['checkout']??[];$checkoutId=(string)($checkout['id']??'');
-        $q=db()->prepare('SELECT * FROM professional_subscriptions WHERE asaas_checkout_id=? ORDER BY id DESC LIMIT 1');$q->execute([$checkoutId]);$sub=$q->fetch();if(!$sub)return;
-       if($event==='CHECKOUT_PAID'){
-    $trialEnds=date('Y-m-d H:i:s',time()+(7*24*60*60));
-    db()->beginTransaction();
-    db()->prepare("UPDATE professional_subscriptions SET status='trial',starts_at=NOW(),asaas_customer_id=COALESCE(?,asaas_customer_id),asaas_subscription_id=COALESCE(?,asaas_subscription_id) WHERE id=?")->execute([$checkout['customer']??null,$checkout['subscription']??null,$sub['id']]);
-    db()->prepare("UPDATE professionals SET subscription_plan=?,subscription_status='trial',asaas_customer_id=COALESCE(?,asaas_customer_id),access_until=?,trial_ends_at=?,cancellation_requested_at=NULL WHERE id=?")->execute([$sub['plan_code'],$checkout['customer']??null,$trialEnds,$trialEnds,$sub['professional_id']]);
-    db()->commit();
-    qualify_referral_reward((int)$sub['professional_id']);
-}elseif(in_array($event,['CHECKOUT_CANCELED','CHECKOUT_EXPIRED'],true))db()->prepare("UPDATE professional_subscriptions SET status='cancelled',ends_at=NOW() WHERE id=? AND status='trial'")->execute([$sub['id']]);}elseif(str_starts_with($event,'SUBSCRIPTION_')){
+        $q=db()->prepare('SELECT * FROM professional_subscriptions WHERE asaas_checkout_id=? ORDER BY id DESC LIMIT 1');$q->execute([$checkoutId]);$sub=$q->fetch();
+        if($sub){
+            if($event==='CHECKOUT_PAID'){
+                db()->beginTransaction();
+                db()->prepare("UPDATE professional_subscriptions SET status='active',starts_at=NOW(),ends_at=NULL,asaas_customer_id=COALESCE(?,asaas_customer_id),asaas_subscription_id=COALESCE(?,asaas_subscription_id) WHERE id=?")->execute([$checkout['customer']??null,$checkout['subscription']??null,$sub['id']]);
+                db()->prepare("UPDATE professionals SET subscription_plan=?,subscription_status='active',asaas_customer_id=COALESCE(?,asaas_customer_id),access_until=NULL,trial_ends_at=NULL,cancellation_requested_at=NULL WHERE id=?")->execute([$sub['plan_code'],$checkout['customer']??null,$sub['professional_id']]);
+                db()->commit();
+                qualify_referral_reward((int)$sub['professional_id']);
+            }elseif(in_array($event,['CHECKOUT_CANCELED','CHECKOUT_EXPIRED'],true)){
+                db()->prepare("UPDATE professional_subscriptions SET status='cancelled',ends_at=NOW() WHERE id=?")->execute([$sub['id']]);
+            }
+        }elseif(db_table_exists('professional_addon_orders')){
+            $q=db()->prepare('SELECT id FROM professional_addon_orders WHERE asaas_checkout_id=? ORDER BY id DESC LIMIT 1');$q->execute([$checkoutId]);$addonId=(int)$q->fetchColumn();
+            if($addonId&&$event==='CHECKOUT_PAID')db()->prepare("UPDATE professional_addon_orders SET status='paid',paid_at=NOW() WHERE id=?")->execute([$addonId]);
+            elseif($addonId&&in_array($event,['CHECKOUT_CANCELED','CHECKOUT_EXPIRED'],true))db()->prepare("UPDATE professional_addon_orders SET status='cancelled' WHERE id=?")->execute([$addonId]);
+        }
+    }elseif(str_starts_with($event,'SUBSCRIPTION_')){
         $remote=$payload['subscription']??[];$customer=(string)($remote['customer']??'');$subscriptionId=(string)($remote['id']??'');
         $q=db()->prepare('SELECT id FROM professionals WHERE asaas_customer_id=? LIMIT 1');$q->execute([$customer]);$professionalId=(int)$q->fetchColumn();if(!$professionalId)return;
         db()->prepare('UPDATE professional_subscriptions SET asaas_subscription_id=? WHERE professional_id=? ORDER BY id DESC LIMIT 1')->execute([$subscriptionId,$professionalId]);

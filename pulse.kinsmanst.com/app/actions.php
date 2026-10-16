@@ -112,6 +112,7 @@ function action_register_professional(): never
     $plan=(string)($_POST['plan']??'basic');
     $billingStart=(string)($_POST['billing_start']??'trial');
     $billingCycle=(string)($_POST['billing_cycle']??'monthly');
+    $landingPage=($_POST['landing_page']??'')==='1';
     if($name===''||!filter_var($email,FILTER_VALIDATE_EMAIL)) throw new RuntimeException('Informe nome e e-mail válidos.');
       assert_strong_password($password);
 
@@ -119,6 +120,7 @@ if (!hash_equals($password, $confirmation)) {
     throw new RuntimeException('As senhas não coincidem.');
 }
     if(!in_array($service,['personal','nutrition','complete'],true)||!in_array($plan,['basic','plus','premium'],true)||!in_array($billingStart,['trial','now'],true)||!in_array($billingCycle,['monthly','annual'],true)) throw new RuntimeException('Modalidade, plano ou forma de início inválidos.');
+    if($landingPage&&($billingStart!=='now'||!in_array($plan,['plus','premium'],true))) throw new RuntimeException('A Landing Page está disponível somente na assinatura imediata dos planos Plus e Premium.');
     if(empty($_POST['accept_terms'])) throw new RuntimeException('Você precisa aceitar os Termos de Uso e a Política de Privacidade.');
     $exists=db()->prepare('SELECT id FROM users WHERE email=? LIMIT 1');$exists->execute([$email]);
     if($exists->fetchColumn()) throw new RuntimeException('Este e-mail já possui cadastro.');
@@ -147,13 +149,13 @@ if (!hash_equals($password, $confirmation)) {
     session_regenerate_id(true);
     $_SESSION['user_id']=$uid;
     $_SESSION['auth_fingerprint']=hash('sha256',$passwordHash);
-    audit('professional.self_registered','professional',$pid,['plan'=>$plan,'service_type'=>$service,'billing_start'=>$billingStart,'trial_ends_at'=>$trialEndsAt,'welcome_email'=>$welcomeSent]);
+    audit('professional.self_registered','professional',$pid,['plan'=>$plan,'service_type'=>$service,'billing_start'=>$billingStart,'billing_cycle'=>$billingCycle,'landing_page'=>$landingPage,'trial_ends_at'=>$trialEndsAt,'welcome_email'=>$welcomeSent]);
     if($isTrial){
         flash('success',$welcomeSent?'Seu teste de 7 dias começou. Enviamos o manual de uso para seu e-mail.':'Seu teste de 7 dias começou. Aproveite a plataforma.');
         redirect(url('dashboard'));
     }
     try {
-        redirect(create_asaas_checkout_for_professional(['id'=>$uid,'tenant_id'=>$tenantId],$pid,$plan,$billingCycle));
+        redirect(create_asaas_checkout_for_professional(['id'=>$uid,'tenant_id'=>$tenantId],$pid,$plan,$billingCycle,$landingPage));
     } catch (Throwable $e) {
         flash('error','Sua conta foi criada, mas não foi possível abrir o pagamento agora. Acesse o Financeiro para tentar novamente.');
         redirect(url('finance'));
@@ -237,17 +239,17 @@ function password_reset_brand(int $userId): array
     if(!preg_match('/^#[0-9a-fA-F]{6}$/',$color))$color='#16765f';
     return [
         'name'=>(string)($brand['brand_name']??'Kinsman Pulse'),
-        'logo'=>(string)($brand['logo_path']??'assets/images/logo-kinsman.png'),
+        'logo'=>(string)($brand['logo_path']??'assets/images/pulse-icon.png'),
         'color'=>$color,
     ];
 }
 
 function password_reset_brand_from_token(string $token): array
 {
-    if(!preg_match('/^[a-f0-9]{64}$/',$token))return ['name'=>'Kinsman Pulse','logo'=>'assets/images/logo-kinsman.png','color'=>'#16765f'];
+    if(!preg_match('/^[a-f0-9]{64}$/',$token))return ['name'=>'Kinsman Pulse','logo'=>'assets/images/pulse-icon.png','color'=>'#16765f'];
     $stmt=db()->prepare('SELECT user_id FROM password_resets WHERE token_hash=? AND used_at IS NULL AND expires_at>NOW() LIMIT 1');
     $stmt->execute([hash('sha256',$token)]);$userId=(int)$stmt->fetchColumn();
-    return $userId?password_reset_brand($userId):['name'=>'Kinsman Pulse','logo'=>'assets/images/logo-kinsman.png','color'=>'#16765f'];
+    return $userId?password_reset_brand($userId):['name'=>'Kinsman Pulse','logo'=>'assets/images/pulse-icon.png','color'=>'#16765f'];
 }
 
 function password_reset_email_html(array $user,string $link,array $brand=[]): string
@@ -257,7 +259,7 @@ function password_reset_email_html(array $user,string $link,array $brand=[]): st
     $appUrl=rtrim((string)env('APP_URL','https://pulse.kinsmanst.com'),'/');
     $brandName=htmlspecialchars((string)($brand['name']??'Kinsman Pulse'),ENT_QUOTES,'UTF-8');
     $brandColor=(string)($brand['color']??'#16765f');if(!preg_match('/^#[0-9a-fA-F]{6}$/',$brandColor))$brandColor='#16765f';
-    $logoPath=(string)($brand['logo']??'assets/images/logo-kinsman.png');
+    $logoPath=(string)($brand['logo']??'assets/images/pulse-icon.png');
     $logo=htmlspecialchars(preg_match('#^https?://#i',$logoPath)?$logoPath:$appUrl.'/'.ltrim($logoPath,'/'),ENT_QUOTES,'UTF-8');
     $year=date('Y');
     return '<!doctype html><html lang="pt-BR"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>'
@@ -377,14 +379,34 @@ function subscription_price(string $plan,string $serviceType='complete'): int
     return match($plan){'basic'=>3990,'plus'=>7990,'premium'=>12990,default=>3990};
 }
 
-function create_asaas_checkout_for_professional(array $user,int $professionalId,string $plan,string $billingCycle='monthly'): string
+function create_asaas_landing_page_checkout(array $user,int $professionalId,string $plan): string
+{
+    if(!db_table_exists('professional_addon_orders'))throw new RuntimeException('Atualização de adicionais pendente no banco de dados.');
+    if(!in_array($plan,['plus','premium'],true))throw new RuntimeException('A Landing Page está disponível somente nos planos Plus e Premium.');
+    $price=$plan==='premium'?9900:39900;
+    $reference='pulse-addon-'.$professionalId.'-landing-page-'.bin2hex(random_bytes(6));
+    $appUrl=rtrim((string)env('APP_URL'),'/');
+    $payload=['billingTypes'=>['CREDIT_CARD','PIX'],'chargeTypes'=>['DETACHED'],'minutesToExpire'=>60,'externalReference'=>$reference,'callback'=>['successUrl'=>$appUrl.'/index.php?page=finance&addon=success','cancelUrl'=>$appUrl.'/index.php?page=finance&addon=cancel','expiredUrl'=>$appUrl.'/index.php?page=finance&addon=expired'],'items'=>[['name'=>'Landing Page profissional','description'=>'Projeto e publicação de Landing Page · pagamento único','quantity'=>1,'value'=>$price/100]]];
+    $checkout=asaas_request('POST','/checkouts',$payload);
+    $checkoutId=(string)($checkout['id']??'');
+    if($checkoutId==='')throw new RuntimeException('A Asaas não retornou o checkout da Landing Page.');
+    db()->prepare("INSERT INTO professional_addon_orders(tenant_id,professional_id,addon_code,price_cents,status,asaas_checkout_id,external_reference) VALUES(?,?, 'landing_page',?,'pending',?,?)")->execute([$user['tenant_id'],$professionalId,$price,$checkoutId,$reference]);
+    return asaas_checkout_url($checkoutId);
+}
+
+function create_asaas_checkout_for_professional(array $user,int $professionalId,string $plan,string $billingCycle='monthly',bool $landingPage=false): string
 {
     if(!in_array($plan,['basic','plus','premium'],true))throw new RuntimeException('Plano inválido.');
+    if(!in_array($billingCycle,['monthly','annual'],true))throw new RuntimeException('Periodicidade inválida.');
     $q=db()->prepare('SELECT service_type FROM professionals WHERE id=?');$q->execute([$professionalId]);$service=(string)$q->fetchColumn();if($service==='')throw new RuntimeException('Profissional inválido.');$price=$billingCycle==='annual'
         ? match($plan){'basic'=>29700,'plus'=>59400,'premium'=>96600,default=>29700}
         : subscription_price($plan,$service);
     $reference='pulse-prof-'.$professionalId.'-'.$plan.'-'.bin2hex(random_bytes(6));$appUrl=rtrim((string)env('APP_URL'),'/');
-    $payload=['billingTypes'=>['CREDIT_CARD'],'chargeTypes'=>['RECURRENT'],'minutesToExpire'=>60,'externalReference'=>$reference,'callback'=>['successUrl'=>$appUrl.'/index.php?page=finance&checkout=success','cancelUrl'=>$appUrl.'/index.php?page=finance&checkout=cancel','expiredUrl'=>$appUrl.'/index.php?page=finance&checkout=expired'],'items'=>[['name'=>'Kinsman Pulse '.ucfirst($plan),'description'=>'Assinatura mensal · Personal','quantity'=>1,'value'=>$price/100]],'subscription'=>['cycle'=>'MONTHLY','nextDueDate'=>date('Y-m-d H:i:s',time()+300)]];
+    $successUrl=$appUrl.'/index.php?page=finance&checkout=success';
+    if($landingPage)$successUrl=create_asaas_landing_page_checkout($user,$professionalId,$plan);
+    $cycle=$billingCycle==='annual'?'YEARLY':'MONTHLY';
+    $cycleLabel=$billingCycle==='annual'?'anual':'mensal';
+    $payload=['billingTypes'=>['CREDIT_CARD'],'chargeTypes'=>['RECURRENT'],'minutesToExpire'=>60,'externalReference'=>$reference,'callback'=>['successUrl'=>$successUrl,'cancelUrl'=>$appUrl.'/index.php?page=finance&checkout=cancel','expiredUrl'=>$appUrl.'/index.php?page=finance&checkout=expired'],'items'=>[['name'=>'Kinsman Pulse '.ucfirst($plan),'description'=>'Assinatura '.$cycleLabel.' · Personal','quantity'=>1,'value'=>$price/100]],'subscription'=>['cycle'=>$cycle,'nextDueDate'=>date('Y-m-d H:i:s',time()+300)]];
     $checkout=asaas_request('POST','/checkouts',$payload);$checkoutId=(string)($checkout['id']??'');if($checkoutId==='')throw new RuntimeException('A Asaas não retornou o checkout.');
     db()->prepare("UPDATE professional_subscriptions SET status='cancelled',ends_at=NOW() WHERE professional_id=? AND status='trial'")->execute([$professionalId]);
     db()->prepare('INSERT INTO professional_subscriptions(tenant_id,professional_id,plan_code,price_cents,status,asaas_checkout_id,external_reference) VALUES(?,?,?,?,\'cancelled\',?,?)')->execute([$user['tenant_id'],$professionalId,$plan,$price,$checkoutId,$reference]);
@@ -394,7 +416,9 @@ function create_asaas_checkout_for_professional(array $user,int $professionalId,
 function action_start_asaas_checkout(): never
 {
     $u=require_role('professional');$plan=(string)($_POST['plan']??'');
-    redirect(create_asaas_checkout_for_professional($u,professional_id($u),$plan));
+    $billingCycle=(string)($_POST['billing_cycle']??'monthly');
+    $landingPage=($_POST['landing_page']??'')==='1';
+    redirect(create_asaas_checkout_for_professional($u,professional_id($u),$plan,$billingCycle,$landingPage));
 }
 
 function action_cancel_subscription(): never

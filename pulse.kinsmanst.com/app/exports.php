@@ -85,7 +85,7 @@ function export_professional_document(array $u,string $type,int $id): void
     if($type==='workout')usort($documents,fn($a,$b)=>strnatcasecmp($a['name'],$b['name']) ?: ($a['id']<=>$b['id']));
     $doc=$documents[0];
     $color=(string)($doc['primary_color']?:'#16765f');if(!preg_match('/^#[0-9a-fA-F]{6}$/',$color))$color='#16765f';
-    $logo=(string)($doc['logo_path']?:'assets/images/logo-kinsman.png');$brand=(string)($doc['brand_name']?:$doc['professional_name']);
+    $logo=(string)($doc['logo_path']?:'assets/images/pulse-icon.png');$brand=(string)($doc['brand_name']?:$doc['professional_name']);
     $age=$doc['birth_date']?(new DateTime($doc['birth_date']))->diff(new DateTime('today'))->y:null;$title=$type==='workout'?'Ficha de treino':'Plano alimentar';
     ?>
 <!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title><?=e($title.' - '.$doc['student_name'])?></title>

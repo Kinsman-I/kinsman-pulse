@@ -829,6 +829,40 @@
   color: #d8f18d;
 }
 
+.pl-pricing article {
+  position: relative;
+}
+
+.pl-plan-badge {
+  display: inline-flex;
+  width: fit-content;
+  margin: -2px 0 16px;
+  padding: 7px 10px;
+  border-radius: 999px;
+  background: #e7f3dc;
+  color: #285c3c;
+  font-size: 10px;
+  font-weight: 850;
+  letter-spacing: .02em;
+}
+
+.pl-plan-badge.is-premium {
+  background: #173f33;
+  color: #dff29f;
+}
+
+.pl-equivalent {
+  min-height: 20px;
+  color: #526c60;
+  font-size: 12px;
+  font-weight: 650;
+}
+
+.pl-equivalent[hidden] {
+  display: block;
+  visibility: hidden;
+}
+
 @media (max-width: 640px) {
   .pl-price-switch {
     width: 100%;

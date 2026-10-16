@@ -450,6 +450,88 @@
   }
 }
 
+.guest-top .pulse-wordmark,
+.auth-card .auth-wordmark {
+  width: auto;
+  height: 46px;
+  max-width: 230px;
+  object-fit: contain;
+}
+
+.auth-card .auth-brand {
+  justify-content: flex-start;
+}
+
+.guest-footer .footer-wordmark {
+  width: 154px;
+  height: auto;
+  object-fit: contain;
+}
+
+.signup-plans .plan-addon-badge {
+  display: inline-flex;
+  width: fit-content;
+  margin-top: 7px;
+  padding: 5px 8px;
+  border-radius: 999px;
+  background: #e8f2dc;
+  color: #315f40;
+  font-size: 10px;
+  font-style: normal;
+  font-weight: 800;
+}
+
+.signup-plans .plan-addon-badge.premium {
+  background: #173f33;
+  color: #ddf09c;
+}
+
+.signup-addon {
+  margin: 4px 0 20px;
+  padding: 16px;
+  border: 1px solid #b9d4c3;
+  border-radius: 14px;
+  background: linear-gradient(135deg,#f6faef,#edf7f1);
+}
+
+.signup-addon[hidden] {
+  display: none;
+}
+
+.signup-addon label {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+}
+
+.signup-addon input {
+  width: 19px;
+  height: 19px;
+  accent-color: #176b50;
+}
+
+.signup-addon b,
+.signup-addon small {
+  display: block;
+}
+
+.signup-addon small,
+.signup-addon p {
+  color: #5f756a;
+  font-size: 11px;
+}
+
+.signup-addon strong {
+  color: #173f36;
+  font-size: 18px;
+}
+
+.signup-addon p {
+  margin: 10px 0 0 31px;
+}
+
 
 .register-card .billing-cycle {
   display: grid;
