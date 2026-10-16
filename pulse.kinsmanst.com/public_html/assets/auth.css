@@ -486,6 +486,10 @@
   color: #ddf09c;
 }
 
+.signup-plans .plan-addon-badge[hidden] {
+  display: none !important;
+}
+
 .signup-addon {
   margin: 4px 0 20px;
   padding: 16px;

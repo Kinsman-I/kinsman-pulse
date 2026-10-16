@@ -120,7 +120,7 @@ if (!hash_equals($password, $confirmation)) {
     throw new RuntimeException('As senhas não coincidem.');
 }
     if(!in_array($service,['personal','nutrition','complete'],true)||!in_array($plan,['basic','plus','premium'],true)||!in_array($billingStart,['trial','now'],true)||!in_array($billingCycle,['monthly','annual'],true)) throw new RuntimeException('Modalidade, plano ou forma de início inválidos.');
-    if($landingPage&&($billingStart!=='now'||!in_array($plan,['plus','premium'],true))) throw new RuntimeException('A Landing Page está disponível somente na assinatura imediata dos planos Plus e Premium.');
+    if($landingPage&&($billingStart!=='now'||$billingCycle!=='annual'||!in_array($plan,['plus','premium'],true))) throw new RuntimeException('A Landing Page está disponível somente na assinatura anual dos planos Plus e Premium.');
     if(empty($_POST['accept_terms'])) throw new RuntimeException('Você precisa aceitar os Termos de Uso e a Política de Privacidade.');
     $exists=db()->prepare('SELECT id FROM users WHERE email=? LIMIT 1');$exists->execute([$email]);
     if($exists->fetchColumn()) throw new RuntimeException('Este e-mail já possui cadastro.');
@@ -398,6 +398,7 @@ function create_asaas_checkout_for_professional(array $user,int $professionalId,
 {
     if(!in_array($plan,['basic','plus','premium'],true))throw new RuntimeException('Plano inválido.');
     if(!in_array($billingCycle,['monthly','annual'],true))throw new RuntimeException('Periodicidade inválida.');
+    if($landingPage&&$billingCycle!=='annual')throw new RuntimeException('A Landing Page está disponível somente no plano anual.');
     $q=db()->prepare('SELECT service_type FROM professionals WHERE id=?');$q->execute([$professionalId]);$service=(string)$q->fetchColumn();if($service==='')throw new RuntimeException('Profissional inválido.');$price=$billingCycle==='annual'
         ? match($plan){'basic'=>29700,'plus'=>59400,'premium'=>96600,default=>29700}
         : subscription_price($plan,$service);

@@ -4253,3 +4253,8 @@ input[type="number"] {
   margin: 0;
   accent-color: #176b50;
 }
+
+.finance-addon-badge[hidden],
+.finance-addon-choice[hidden] {
+  display: none !important;
+}
